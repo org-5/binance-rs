@@ -1273,6 +1273,16 @@ pub struct DepositAddress {
     pub url: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct HistoricalDataDownloadId {
+    pub id: u128,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct HistoricalDataDownloadLink {
+    pub link: String,
+}
+
 pub(crate) mod string_or_float {
     use std::fmt;
 

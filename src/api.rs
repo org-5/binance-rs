@@ -91,6 +91,8 @@ pub enum Futures {
     OpenOrders,
     UserDataStream,
     Income,
+    HistoricalDataDownloadId,
+    HistoricalDataDownloadLink,
 }
 
 impl From<API> for String {
@@ -165,6 +167,8 @@ impl From<API> for String {
                 Futures::OpenOrders => "/fapi/v1/openOrders",
                 Futures::UserDataStream => "/fapi/v1/listenKey",
                 Futures::Income => "/fapi/v1/income",
+                Futures::HistoricalDataDownloadId => "/sapi/v1/futuresHistDataId",
+                Futures::HistoricalDataDownloadLink => "/sapi/v1/downloadLink",
             },
         })
     }

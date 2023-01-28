@@ -1,14 +1,16 @@
 use error_chain::bail;
+use tracing::debug;
 
 use crate::util::build_signed_request;
 use crate::model::{
     AccountInformation, Balance, Empty, Order, OrderCanceled, TradeHistory, Transaction,
+    HistoricalDataDownloadId, HistoricalDataDownloadLink,
 };
 use crate::client::Client;
 use crate::errors::Result;
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use crate::api::API;
+use crate::api::{API, Futures};
 use crate::api::Spot;
 
 #[derive(Clone)]
@@ -764,5 +766,43 @@ impl Account {
         }
 
         order_parameters
+    }
+
+    pub fn download_hist_data_get_download_id(
+        &self, symbol: &str, start_time: u128, end_time: u128, data_type: &str, timestamp: u128,
+    ) -> Result<HistoricalDataDownloadId> {
+        let mut parameters: BTreeMap<String, String> = BTreeMap::new();
+        parameters.insert("symbol".into(), symbol.into());
+        parameters.insert("startTime".into(), start_time.to_string());
+        parameters.insert("endTime".into(), end_time.to_string());
+        parameters.insert("dataType".into(), data_type.into());
+        parameters.insert("timestamp".into(), timestamp.to_string());
+
+        let request = build_signed_request(parameters, self.recv_window)?;
+
+        let res: HistoricalDataDownloadId = self
+            .client
+            .post_signed(API::Futures(Futures::HistoricalDataDownloadId), request)?;
+
+        debug!(?res, "download_hist_data_get_download_id");
+        Ok(res)
+    }
+
+    pub fn download_hist_data_get_download_link(
+        &self, download_id: &str, timestamp: u128,
+    ) -> Result<HistoricalDataDownloadLink> {
+        let mut parameters: BTreeMap<String, String> = BTreeMap::new();
+        parameters.insert("download_id".into(), download_id.into());
+        parameters.insert("timestamp".into(), timestamp.to_string());
+
+        let request = build_signed_request(parameters, self.recv_window)?;
+
+        let res: HistoricalDataDownloadLink = self.client.get_signed(
+            API::Futures(Futures::HistoricalDataDownloadLink),
+            Some(request),
+        )?;
+
+        debug!(?res, "download_hist_data_get_download_link");
+        Ok(res)
     }
 }
