@@ -32,6 +32,7 @@ pub struct Symbol {
     pub filters: Vec<Filters>,
     pub order_types: Vec<String>,
     pub time_in_force: Vec<String>,
+    pub onboard_date: u128,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
