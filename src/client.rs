@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use error_chain::bail;
 use hex::encode as hex_encode;
 use hmac::{Hmac, Mac};
@@ -41,6 +42,17 @@ impl Client {
             .send()?;
 
         self.handler(response)
+    }
+
+    pub fn get_signed_bytes(&self, endpoint: API, request: Option<String>) -> Result<Bytes> {
+        let url = self.sign_request(endpoint, request);
+        let client = &self.inner_client;
+        let response = client
+            .get(url.as_str())
+            .headers(self.build_headers(true)?)
+            .send()?;
+
+        self.bytes_handler(response)
     }
 
     pub fn post_signed<T: DeserializeOwned>(&self, endpoint: API, request: String) -> Result<T> {
@@ -154,6 +166,29 @@ impl Client {
         );
 
         Ok(custom_headers)
+    }
+
+    fn bytes_handler(&self, response: Response) -> Result<Bytes> {
+        match response.status() {
+            StatusCode::OK => Ok(response.bytes()?),
+            StatusCode::INTERNAL_SERVER_ERROR => {
+                bail!("Internal Server Error");
+            }
+            StatusCode::SERVICE_UNAVAILABLE => {
+                bail!("Service Unavailable");
+            }
+            StatusCode::UNAUTHORIZED => {
+                bail!("Unauthorized");
+            }
+            StatusCode::BAD_REQUEST => {
+                let error: BinanceContentError = response.json()?;
+
+                Err(ErrorKind::BinanceError(error).into())
+            }
+            s => {
+                bail!(format!("Received response: {:?}", s));
+            }
+        }
     }
 
     fn handler<T: DeserializeOwned>(&self, response: Response) -> Result<T> {

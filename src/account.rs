@@ -1,3 +1,4 @@
+use bytes::Bytes;
 use error_chain::bail;
 use tracing::debug;
 
@@ -10,6 +11,7 @@ use crate::client::Client;
 use crate::errors::Result;
 use std::collections::BTreeMap;
 use std::fmt::Display;
+use std::io::Cursor;
 use crate::api::{API, Futures};
 use crate::api::Spot;
 
@@ -792,7 +794,7 @@ impl Account {
         &self, download_id: &str, timestamp: u128,
     ) -> Result<HistoricalDataDownloadLink> {
         let mut parameters: BTreeMap<String, String> = BTreeMap::new();
-        parameters.insert("download_id".into(), download_id.into());
+        parameters.insert("downloadId".into(), download_id.into());
         parameters.insert("timestamp".into(), timestamp.to_string());
 
         let request = build_signed_request(parameters, self.recv_window)?;
@@ -802,7 +804,28 @@ impl Account {
             Some(request),
         )?;
 
+        // result is Link is preparing, please try again later
+        if res.link == "Link is preparing" {
+            return Err(
+                format!("Link is preparing, please try again later, err: {:?}", res).into(),
+            );
+        }
+
         debug!(?res, "download_hist_data_get_download_link");
         Ok(res)
+    }
+
+    pub fn download_hist_data_file(&self, url: &str) -> Result<()> {
+        let response: Bytes = self
+            .client
+            .get_signed_bytes(API::Futures(Futures::DownloadLink(url.to_string())), None)?;
+
+        debug!(?response);
+
+        let mut file = std::fs::File::create("test.tar.gz")?;
+        let mut content = Cursor::new(response);
+        std::io::copy(&mut content, &mut file)?;
+
+        Ok(())
     }
 }
