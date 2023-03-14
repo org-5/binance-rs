@@ -135,18 +135,24 @@ impl Client {
 
     // Request must be signed
     fn sign_request(&self, endpoint: API, request: Option<String>) -> String {
+        // If endpoint starts with http, then it is a full url, no need to add host.
+        let host = if String::from(endpoint.clone()).starts_with("http") {
+            String::new()
+        } else {
+            self.host.clone()
+        };
         if let Some(request) = request {
             let mut signed_key =
                 Hmac::<Sha256>::new_from_slice(self.secret_key.as_bytes()).unwrap();
             signed_key.update(request.as_bytes());
             let signature = hex_encode(signed_key.finalize().into_bytes());
             let request_body: String = format!("{}&signature={}", request, signature);
-            format!("{}{}?{}", self.host, String::from(endpoint), request_body)
+            format!("{}{}?{}", host, String::from(endpoint), request_body)
         } else {
             let signed_key = Hmac::<Sha256>::new_from_slice(self.secret_key.as_bytes()).unwrap();
             let signature = hex_encode(signed_key.finalize().into_bytes());
             let request_body: String = format!("&signature={}", signature);
-            format!("{}{}?{}", self.host, String::from(endpoint), request_body)
+            format!("{}{}?{}", host, String::from(endpoint), request_body)
         }
     }
 

@@ -11,6 +11,7 @@ use crate::userstream::UserStream;
 use crate::savings::Savings;
 
 #[allow(clippy::all)]
+#[derive(Clone)]
 pub enum API {
     Spot(Spot),
     Savings(Sapi),
@@ -20,6 +21,7 @@ pub enum API {
 /// Endpoint for production and test orders.
 ///
 /// Orders issued to test are validated, but not sent into the matching engine.
+#[derive(Clone)]
 pub enum Spot {
     Ping,
     Time,
@@ -46,6 +48,7 @@ pub enum Spot {
     UserDataStream,
 }
 
+#[derive(Clone)]
 pub enum Sapi {
     AllCoins,
     AssetDetail,
@@ -53,6 +56,7 @@ pub enum Sapi {
     SpotFuturesTransfer,
 }
 
+#[derive(Clone)]
 pub enum Futures {
     Ping,
     Time,
