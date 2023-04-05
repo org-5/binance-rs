@@ -1,6 +1,6 @@
-use bytes::Bytes;
 use error_chain::bail;
-use tracing::debug;
+use futures_util::StreamExt;
+use tracing::{debug, info};
 
 use crate::util::build_signed_request;
 use crate::model::{
@@ -11,7 +11,10 @@ use crate::client::Client;
 use crate::errors::Result;
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::io::Cursor;
+use std::fs::File;
+use std::io::Write;
+use std::thread;
+use std::time::Duration;
 use crate::api::{API, Futures};
 use crate::api::Spot;
 
@@ -792,39 +795,56 @@ impl Account {
 
     pub fn download_hist_data_get_download_link(
         &self, download_id: &str, timestamp: u128,
-    ) -> Result<HistoricalDataDownloadLink> {
+    ) -> Result<String> {
         let mut parameters: BTreeMap<String, String> = BTreeMap::new();
         parameters.insert("downloadId".into(), download_id.into());
         parameters.insert("timestamp".into(), timestamp.to_string());
 
-        let request = build_signed_request(parameters, self.recv_window)?;
+        let res = loop {
+            let request = build_signed_request(parameters.clone(), self.recv_window)?;
 
-        let res: HistoricalDataDownloadLink = self.client.get_signed(
-            API::Futures(Futures::HistoricalDataDownloadLink),
-            Some(request),
-        )?;
+            let res: HistoricalDataDownloadLink = self.client.get_signed(
+                API::Futures(Futures::HistoricalDataDownloadLink),
+                Some(request),
+            )?;
 
-        // result is Link is preparing, please try again later
-        if res.link == "Link is preparing" {
-            return Err(
-                format!("Link is preparing, please try again later, err: {:?}", res).into(),
-            );
-        }
+            // result is Link is preparing, please try again later
+            if res
+                .link
+                .contains("Link is preparing; please request later.")
+            {
+                info!(res.link);
+                thread::sleep(Duration::from_secs(60));
+                continue;
+            }
+            debug!(?res, "download_hist_data_get_download_link");
 
-        debug!(?res, "download_hist_data_get_download_link");
+            break res.link;
+        };
+
         Ok(res)
     }
 
-    pub fn download_hist_data_file(&self, url: &str) -> Result<()> {
-        let response: Bytes = self
-            .client
-            .get_signed_bytes(API::Futures(Futures::DownloadLink(url.to_string())), None)?;
+    pub async fn download_hist_data_file(&self, url: &str) -> Result<()> {
+        dbg!(url);
+        
+        let path = "./data.tar.gz";
+        let client = reqwest::Client::new();
+        let res = client
+            .get(url)
+            .send()
+            .await
+            .or(Err(format!("Failed to GET from '{}'", &url)))?;
 
-        debug!(?response);
+        // download chunks
+        let mut file = File::create(path).or(Err(format!("Failed to create file '{}'", path)))?;
+        let mut stream = res.bytes_stream();
 
-        let mut file = std::fs::File::create("test.tar.gz")?;
-        let mut content = Cursor::new(response);
-        std::io::copy(&mut content, &mut file)?;
+        while let Some(item) = stream.next().await {
+            let chunk = item.or(Err("Error while downloading file".to_string()))?;
+            file.write_all(&chunk)
+                .map_err(|_| "Error while writing to file".to_string())?;
+        }
 
         Ok(())
     }
