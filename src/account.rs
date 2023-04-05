@@ -1,5 +1,4 @@
 use error_chain::bail;
-use futures_util::StreamExt;
 use tracing::{debug, info};
 
 use crate::util::build_signed_request;
@@ -11,7 +10,6 @@ use crate::client::Client;
 use crate::errors::Result;
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::fs::File;
 use std::io::Write;
 use std::thread;
 use std::time::Duration;
@@ -825,27 +823,30 @@ impl Account {
         Ok(res)
     }
 
-    pub async fn download_hist_data_file(&self, url: &str) -> Result<()> {
+    pub fn download_hist_data_file(&self, url: &str) -> Result<()> {
         dbg!(url);
-        
+
         let path = "./data.tar.gz";
-        let client = reqwest::Client::new();
-        let res = client
-            .get(url)
-            .send()
-            .await
-            .or(Err(format!("Failed to GET from '{}'", &url)))?;
+        let resp = ureq::get(url).call().unwrap();
 
-        // download chunks
-        let mut file = File::create(path).or(Err(format!("Failed to create file '{}'", path)))?;
-        let mut stream = res.bytes_stream();
+        let len: usize = resp.header("Content-Length").unwrap().parse().unwrap();
 
-        while let Some(item) = stream.next().await {
-            let chunk = item.or(Err("Error while downloading file".to_string()))?;
-            file.write_all(&chunk)
-                .map_err(|_| "Error while writing to file".to_string())?;
+        let mut buffer = [0; 10_000];
+        let mut reader = resp.into_reader();
+        let mut cursor = 0;
+        let mut file = std::fs::File::create(path).unwrap();
+
+        loop {
+            let b_len = reader.read(&mut buffer).unwrap();
+
+            // write to file
+            file.write_all(&buffer[0..b_len]).unwrap();
+
+            cursor += b_len;
+            if cursor >= len {
+                break;
+            }
         }
-
         Ok(())
     }
 }
