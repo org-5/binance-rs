@@ -1,5 +1,5 @@
 use error_chain::bail;
-use tracing::{debug, info};
+use tracing::debug;
 
 use crate::util::build_signed_request;
 use crate::model::{
@@ -11,7 +11,8 @@ use crate::errors::Result;
 use std::collections::BTreeMap;
 use std::fmt::Display;
 use std::io::Write;
-use std::thread;
+use std::path::PathBuf;
+use std::{thread, fs};
 use std::time::Duration;
 use crate::api::{API, Futures};
 use crate::api::Spot;
@@ -811,11 +812,10 @@ impl Account {
                 .link
                 .contains("Link is preparing; please request later.")
             {
-                info!(res.link);
+                println!("Link is preparing; please request later. sleep 60s");
                 thread::sleep(Duration::from_secs(60));
                 continue;
             }
-            debug!(?res, "download_hist_data_get_download_link");
 
             break res.link;
         };
@@ -823,10 +823,14 @@ impl Account {
         Ok(res)
     }
 
-    pub fn download_hist_data_file(&self, url: &str) -> Result<()> {
-        dbg!(url);
+    pub fn download_hist_data_file(&self, url: &str, path: PathBuf) -> Result<PathBuf> {
+        if path.ends_with("/") {
+            return Err("must be a path to a file".into());
+        }
+        if path.extension().is_none() {
+            return Err("must have a .tar.gz extension".into());
+        }
 
-        let path = "./data.tar.gz";
         let resp = ureq::get(url).call().unwrap();
 
         let len: usize = resp.header("Content-Length").unwrap().parse().unwrap();
@@ -834,7 +838,10 @@ impl Account {
         let mut buffer = [0; 10_000];
         let mut reader = resp.into_reader();
         let mut cursor = 0;
-        let mut file = std::fs::File::create(path).unwrap();
+
+        fs::create_dir_all(path.parent().unwrap())?;
+
+        let mut file = fs::File::create(path.clone()).unwrap();
 
         loop {
             let b_len = reader.read(&mut buffer).unwrap();
@@ -847,6 +854,7 @@ impl Account {
                 break;
             }
         }
-        Ok(())
+
+        Ok(path)
     }
 }
