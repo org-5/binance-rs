@@ -1,5 +1,4 @@
 use error_chain::bail;
-use tracing::debug;
 
 use crate::util::build_signed_request;
 use crate::model::{
@@ -13,6 +12,7 @@ use std::fmt::Display;
 use std::io::Write;
 use std::path::PathBuf;
 use std::{thread, fs};
+use std::cmp::min;
 use std::time::Duration;
 use crate::api::{API, Futures};
 use crate::api::Spot;
@@ -774,22 +774,37 @@ impl Account {
 
     pub fn download_hist_data_get_download_id(
         &self, symbol: &str, start_time: u128, end_time: u128, data_type: &str, timestamp: u128,
-    ) -> Result<HistoricalDataDownloadId> {
-        let mut parameters: BTreeMap<String, String> = BTreeMap::new();
-        parameters.insert("symbol".into(), symbol.into());
-        parameters.insert("startTime".into(), start_time.to_string());
-        parameters.insert("endTime".into(), end_time.to_string());
-        parameters.insert("dataType".into(), data_type.into());
-        parameters.insert("timestamp".into(), timestamp.to_string());
+    ) -> Result<Vec<HistoricalDataDownloadId>> {
+        let mut ids: Vec<HistoricalDataDownloadId> = Vec::new();
+        // Split in 3 months chunks
+        // 3 months in milliseconds
+        let three_months_duration: u128 = 3 * 30 * 24 * 60 * 60 * 1000;
+        let mut tot_duration = end_time - start_time;
+        let mut start_time = start_time;
+        let mut this_duration = min(tot_duration, three_months_duration);
 
-        let request = build_signed_request(parameters, self.recv_window)?;
+        while tot_duration > 0 {
+            let mut parameters: BTreeMap<String, String> = BTreeMap::new();
+            parameters.insert("symbol".into(), symbol.into());
+            parameters.insert("startTime".into(), start_time.to_string());
+            parameters.insert("endTime".into(), (start_time + this_duration).to_string());
+            parameters.insert("dataType".into(), data_type.into());
+            parameters.insert("timestamp".into(), timestamp.to_string());
 
-        let res: HistoricalDataDownloadId = self
-            .client
-            .post_signed(API::Futures(Futures::HistoricalDataDownloadId), request)?;
+            let request = build_signed_request(parameters, self.recv_window)?;
 
-        debug!(?res, "download_hist_data_get_download_id");
-        Ok(res)
+            let res: HistoricalDataDownloadId = self
+                .client
+                .post_signed(API::Futures(Futures::HistoricalDataDownloadId), request)?;
+
+            ids.push(res);
+
+            start_time += this_duration;
+            tot_duration -= this_duration;
+            this_duration = min(tot_duration, three_months_duration);
+        }
+
+        Ok(ids)
     }
 
     pub fn download_hist_data_get_download_link(
