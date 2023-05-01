@@ -7,6 +7,7 @@ use crate::model::{
 };
 use crate::futures::model;
 use error_chain::bail;
+use tracing::debug;
 use url::Url;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -201,6 +202,7 @@ impl<'a> FuturesWebSockets<'a> {
                         }
                     }
                     Message::Ping(_) => {
+                        debug!("Ping received.");
                         socket.0.write_message(Message::Pong(vec![])).unwrap();
                     }
                     Message::Pong(_) | Message::Binary(_) | Message::Frame(_) => (),
