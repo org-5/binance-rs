@@ -1,4 +1,5 @@
 use error_chain::bail;
+use tracing::info;
 
 use crate::util::build_signed_request;
 use crate::model::{
@@ -827,7 +828,7 @@ impl Account {
                 .link
                 .contains("Link is preparing; please request later.")
             {
-                println!("Link is preparing; please request later. sleep 60s");
+                info!("Link is preparing; please request later. sleep 60s");
                 thread::sleep(Duration::from_secs(60));
                 continue;
             }
