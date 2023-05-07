@@ -832,6 +832,10 @@ impl Account {
                 thread::sleep(Duration::from_secs(60));
                 continue;
             }
+            if !res.link.starts_with("https://") {
+                // "received something, but not a link".into() show link
+                return Err(format!("received something, but not a link: {}", res.link).into());
+            }
 
             break res.link;
         };
