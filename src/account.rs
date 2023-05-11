@@ -14,7 +14,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::{thread, fs};
 use std::cmp::min;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use crate::api::{API, Futures};
 use crate::api::Spot;
 
@@ -814,6 +814,7 @@ impl Account {
         let mut parameters: BTreeMap<String, String> = BTreeMap::new();
         parameters.insert("downloadId".into(), download_id.into());
         parameters.insert("timestamp".into(), timestamp.to_string());
+        let start_time = Instant::now();
 
         let res = loop {
             let request = build_signed_request(parameters.clone(), self.recv_window)?;
@@ -828,7 +829,11 @@ impl Account {
                 .link
                 .contains("Link is preparing; please request later.")
             {
-                info!("Link is preparing; please request later. sleep 60s");
+                info!(
+                    res.link,
+                    "Link is preparing; please request later, waited for a total of {:?} so far. sleeping 60s",
+                    Instant::now() - start_time
+                );
                 thread::sleep(Duration::from_secs(60));
                 continue;
             }
