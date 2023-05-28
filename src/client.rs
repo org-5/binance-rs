@@ -2,6 +2,7 @@ use bytes::Bytes;
 use error_chain::bail;
 use hex::encode as hex_encode;
 use hmac::{Hmac, Mac};
+use tracing::debug;
 use crate::errors::{BinanceContentError, ErrorKind, Result};
 use reqwest::StatusCode;
 use reqwest::blocking::Response;
@@ -40,6 +41,11 @@ impl Client {
             .get(url.as_str())
             .headers(self.build_headers(true)?)
             .send()?;
+
+        if response.headers().contains_key("x-mbx-used-weight-1m") {
+            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
+            debug!("Used weights: {}", used_weights.to_str().unwrap());
+        }
 
         self.handler(response)
     }
