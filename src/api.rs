@@ -203,6 +203,8 @@ impl Binance for General {
     ) -> General {
         General {
             client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone()),
+            cache: None,
+            last_update: None,
         }
     }
 }
