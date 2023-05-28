@@ -58,6 +58,11 @@ impl Client {
             .headers(self.build_headers(true)?)
             .send()?;
 
+        if response.headers().contains_key("x-mbx-used-weight-1m") {
+            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
+            debug!("Used weights: {}", used_weights.to_str().unwrap());
+        }
+
         self.bytes_handler(response)
     }
 
@@ -68,6 +73,11 @@ impl Client {
             .post(url.as_str())
             .headers(self.build_headers(true)?)
             .send()?;
+
+        if response.headers().contains_key("x-mbx-used-weight-1m") {
+            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
+            debug!("Used weights: {}", used_weights.to_str().unwrap());
+        }
 
         self.handler(response)
     }
@@ -95,6 +105,11 @@ impl Client {
 
         let client = &self.inner_client;
         let response = client.get(url.as_str()).send()?;
+
+        if response.headers().contains_key("x-mbx-used-weight-1m") {
+            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
+            debug!("Used weights: {}", used_weights.to_str().unwrap());
+        }
 
         self.handler(response)
     }

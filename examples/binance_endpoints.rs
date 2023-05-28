@@ -23,7 +23,7 @@ fn main() {
 }
 
 fn general(use_testnet: bool) {
-    let general: General = if use_testnet {
+    let mut general: General = if use_testnet {
         let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
         Binance::new_with_config(None, None, &config)
     } else {

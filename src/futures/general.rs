@@ -33,18 +33,8 @@ impl FuturesGeneral {
     // - Current exchange trading rules and symbol information
     // The boolean is true if the cache was used.
     pub fn exchange_info(&mut self) -> Result<(ExchangeInformation, bool)> {
-        if self.cache.is_some() {
-            if let Some(last_update) = self.last_update {
-                if SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs() -
-                    last_update <
-                    CACHE_TTL
-                {
-                    return Ok((self.cache.clone().unwrap(), true));
-                }
-            }
+        if self.has_cache() {
+            return Ok((self.cache.clone().unwrap(), true));
         }
         let info: ExchangeInformation =
             self.client.get(API::Futures(Futures::ExchangeInfo), None)?;
@@ -56,6 +46,17 @@ impl FuturesGeneral {
                 .as_secs(),
         );
         Ok((info, false))
+    }
+
+    pub fn has_cache(&self) -> bool {
+        self.cache.is_some() &&
+            self.last_update.is_some() &&
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() -
+                self.last_update.unwrap() <
+                CACHE_TTL
     }
 
     // Get Symbol information

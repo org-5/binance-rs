@@ -11,7 +11,7 @@ fn main() {
 }
 
 fn general() {
-    let general: FuturesGeneral = Binance::new(None, None);
+    let mut general: FuturesGeneral = Binance::new(None, None);
 
     match general.ping() {
         Ok(answer) => println!("{:?}", answer),

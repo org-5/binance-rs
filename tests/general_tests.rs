@@ -49,9 +49,9 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let general: General = Binance::new_with_config(None, None, &config);
+        let mut general: General = Binance::new_with_config(None, None, &config);
 
-        let exchange_info = general.exchange_info().unwrap();
+        let exchange_info = general.exchange_info().unwrap().0;
         mock_exchange_info.assert();
 
         assert!(exchange_info.symbols.len() > 1);
@@ -65,7 +65,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let general: General = Binance::new_with_config(None, None, &config);
+        let mut general: General = Binance::new_with_config(None, None, &config);
 
         let symbol = general.get_symbol_info("BNBBTC").unwrap();
         mock_exchange_info.assert();
