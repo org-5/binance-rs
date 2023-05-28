@@ -1,3 +1,5 @@
+use std::time::{UNIX_EPOCH, SystemTime};
+
 use error_chain::bail;
 
 use crate::futures::model::{ExchangeInformation, ServerTime, Symbol};
@@ -6,9 +8,13 @@ use crate::errors::Result;
 use crate::api::API;
 use crate::api::Futures;
 
+const CACHE_TTL: u64 = 600; // 10 minutes.
+
 #[derive(Clone)]
 pub struct FuturesGeneral {
     pub client: Client,
+    pub(crate) cache: Option<ExchangeInformation>,
+    pub(crate) last_update: Option<u64>,
 }
 
 impl FuturesGeneral {
@@ -25,19 +31,42 @@ impl FuturesGeneral {
 
     // Obtain exchange information
     // - Current exchange trading rules and symbol information
-    pub fn exchange_info(&self) -> Result<ExchangeInformation> {
-        self.client.get(API::Futures(Futures::ExchangeInfo), None)
+    // The boolean is true if the cache was used.
+    pub fn exchange_info(&mut self) -> Result<(ExchangeInformation, bool)> {
+        if self.cache.is_some() {
+            if let Some(last_update) = self.last_update {
+                if SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() -
+                    last_update <
+                    CACHE_TTL
+                {
+                    return Ok((self.cache.clone().unwrap(), true));
+                }
+            }
+        }
+        let info: ExchangeInformation =
+            self.client.get(API::Futures(Futures::ExchangeInfo), None)?;
+        self.cache = Some(info.clone());
+        self.last_update = Some(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        );
+        Ok((info, false))
     }
 
     // Get Symbol information
-    pub fn get_symbol_info<S>(&self, symbol: S) -> Result<Symbol>
+    pub fn get_symbol_info<S>(&mut self, symbol: S) -> Result<Symbol>
     where
         S: Into<String>,
     {
         let upper_symbol = symbol.into().to_uppercase();
         match self.exchange_info() {
             Ok(info) => {
-                for item in info.symbols {
+                for item in info.0.symbols {
                     if item.symbol == upper_symbol {
                         return Ok(item);
                     }

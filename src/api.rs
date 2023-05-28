@@ -287,6 +287,8 @@ impl Binance for FuturesGeneral {
                 secret_key,
                 config.futures_rest_api_endpoint.clone(),
             ),
+            cache: None,
+            last_update: None,
         }
     }
 }
