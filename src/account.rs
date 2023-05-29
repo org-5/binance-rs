@@ -1,5 +1,5 @@
 use error_chain::bail;
-use tracing::info;
+use tracing::{info, debug};
 
 use crate::util::build_signed_request;
 use crate::model::{
@@ -17,6 +17,8 @@ use std::cmp::min;
 use std::time::{Duration, Instant};
 use crate::api::{API, Futures};
 use crate::api::Spot;
+
+use humantime::format_duration;
 
 #[derive(Clone)]
 pub struct Account {
@@ -776,6 +778,15 @@ impl Account {
     pub fn download_hist_data_get_download_id(
         &self, symbol: &str, start_time: u128, end_time: u128, data_type: &str, timestamp: u128,
     ) -> Result<Vec<HistoricalDataDownloadId>> {
+        let duration = std::time::Duration::from_millis((end_time - start_time) as u64);
+        debug!(
+            "Downloading historical data for {} from {} to {}, duration: {}",
+            symbol,
+            start_time,
+            end_time,
+            format_duration(duration)
+        );
+
         let mut ids: Vec<HistoricalDataDownloadId> = Vec::new();
         // Split in 3 months chunks
         // 3 months in milliseconds
