@@ -191,8 +191,8 @@ impl<'a> FuturesWebSockets<'a> {
         Ok(())
     }
 
-    pub fn event_loop(&mut self, running: &AtomicBool) -> Result<()> {
-        while running.load(Ordering::Relaxed) {
+    pub fn event_loop(&mut self, should_stop: &AtomicBool) -> Result<()> {
+        while !should_stop.load(Ordering::Relaxed) {
             if let Some(ref mut socket) = self.socket {
                 let message = socket.0.read_message()?;
                 match message {
