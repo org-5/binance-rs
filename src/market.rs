@@ -11,7 +11,7 @@ use crate::api::API;
 use crate::api::Spot;
 use std::convert::TryInto;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Market {
     pub client: Client,
     pub recv_window: u64,

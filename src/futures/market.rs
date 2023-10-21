@@ -38,7 +38,7 @@ use std::convert::TryInto;
 // Add limit parameters to functions
 // Implement all functions
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FuturesMarket {
     pub client: Client,
     pub recv_window: u64,

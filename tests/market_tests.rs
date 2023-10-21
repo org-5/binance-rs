@@ -18,7 +18,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let order_book = market.get_depth("LTCBTC").unwrap();
         mock_get_depth.assert();
@@ -36,7 +36,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let order_book = market.get_custom_depth("LTCBTC", 10).unwrap();
         mock_get_custom_depth.assert();
@@ -53,7 +53,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let prices: Prices = market.get_all_prices().unwrap();
         mock_get_all_prices.assert();
@@ -80,7 +80,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let symbol = market.get_price("LTCBTC").unwrap();
         mock_get_price.assert();
@@ -98,7 +98,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let symbol = market.get_average_price("LTCBTC").unwrap();
         mock_get_average_price.assert();
@@ -115,7 +115,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let book_tickers = market.get_all_book_tickers().unwrap();
         mock_get_all_book_tickers.assert();
@@ -178,7 +178,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let book_ticker = market.get_book_ticker("LTCBTC").unwrap();
         mock_get_book_ticker.assert();
@@ -199,7 +199,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let price_stats = market.get_24h_price_stats("BNBBTC").unwrap();
         mock_get_24h_price_stats.assert();
@@ -251,7 +251,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let prices_stats = market.get_all_24h_price_stats().unwrap();
         mock_get_all_24h_price_stats.assert();
@@ -308,7 +308,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let market: Market = Binance::new_with_config(None, None, &config);
+        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
 
         let klines = market.get_klines("LTCBTC", "5m", 10, None, None).unwrap();
         mock_get_klines.assert();

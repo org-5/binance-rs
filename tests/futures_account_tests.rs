@@ -23,7 +23,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config);
+        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let response = account.change_initial_leverage("LTCUSDT", 2).unwrap();
 
@@ -52,7 +52,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config);
+        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.cancel_all_open_orders("BTCUSDT").unwrap();
 
@@ -72,7 +72,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config);
+        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.change_position_mode(true).unwrap();
 
@@ -90,7 +90,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config);
+        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account.stop_market_close_buy("SRMUSDT", 10.5).unwrap();
 
@@ -114,7 +114,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config);
+        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account.stop_market_close_sell("SRMUSDT", 7.4).unwrap();
 
@@ -138,7 +138,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config);
+        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let custom_order = CustomOrderRequest {
             symbol: "SRMUSDT".into(),
@@ -182,7 +182,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config);
+        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let income_request = IncomeRequest {
             symbol: Some("BTCUSDT".into()),

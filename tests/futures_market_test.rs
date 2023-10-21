@@ -17,7 +17,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_futures_rest_api_endpoint(mockito::server_url());
-        let market: FuturesMarket = Binance::new_with_config(None, None, &config);
+        let market: FuturesMarket = Binance::new_with_config(None, None, &config).unwrap();
 
         let open_interest_hists = market
             .open_interest_statistics("BTCUSDT", "5m", 10, None, None)

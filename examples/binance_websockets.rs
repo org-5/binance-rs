@@ -17,7 +17,7 @@ fn main() {
 
 fn user_stream() {
     let api_key_user = Some("YOUR_API_KEY".into());
-    let user_stream: UserStream = Binance::new(api_key_user, None);
+    let user_stream: UserStream = Binance::new(api_key_user, None).unwrap();
 
     if let Ok(answer) = user_stream.start() {
         println!("Data Stream Started ...");
@@ -40,7 +40,7 @@ fn user_stream() {
 fn user_stream_websocket() {
     let keep_running = AtomicBool::new(true); // Used to control the event loop
     let api_key_user = Some("YOUR_KEY".into());
-    let user_stream: UserStream = Binance::new(api_key_user, None);
+    let user_stream: UserStream = Binance::new(api_key_user, None).unwrap();
 
     if let Ok(answer) = user_stream.start() {
         let listen_key = answer.listen_key;

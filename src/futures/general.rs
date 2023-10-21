@@ -10,7 +10,7 @@ use crate::api::Futures;
 
 const CACHE_TTL: u64 = 600; // 10 minutes.
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FuturesGeneral {
     pub client: Client,
     pub(crate) cache: Option<ExchangeInformation>,

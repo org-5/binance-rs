@@ -25,9 +25,9 @@ fn main() {
 fn general(use_testnet: bool) {
     let mut general: General = if use_testnet {
         let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
-        Binance::new_with_config(None, None, &config)
+        Binance::new_with_config(None, None, &config).unwrap()
     } else {
-        Binance::new(None, None)
+        Binance::new(None, None).unwrap()
     };
 
     let ping = general.ping();
@@ -69,7 +69,7 @@ fn account() {
     let api_key = Some("YOUR_API_KEY".into());
     let secret_key = Some("YOUR_SECRET_KEY".into());
 
-    let account: Account = Binance::new(api_key, secret_key);
+    let account: Account = Binance::new(api_key, secret_key).unwrap();
 
     match account.get_account() {
         Ok(answer) => println!("{:?}", answer.balances),
@@ -138,7 +138,7 @@ fn savings() {
     let api_key = Some("YOUR_API_KEY".into());
     let api_secret = Some("YOUR_SECRET_KEY".into());
 
-    let savings: Savings = Binance::new(api_key, api_secret);
+    let savings: Savings = Binance::new(api_key, api_secret).unwrap();
 
     match savings.get_all_coins() {
         Ok(answer) => println!("{:#?}", answer),
@@ -158,7 +158,7 @@ fn savings() {
 
 #[allow(dead_code)]
 fn market_data() {
-    let market: Market = Binance::new(None, None);
+    let market: Market = Binance::new(None, None).unwrap();
 
     // Order book at default depth
     match market.get_depth("BNBETH") {

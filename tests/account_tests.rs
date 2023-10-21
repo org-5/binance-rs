@@ -22,7 +22,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let account = account.get_account().unwrap();
 
@@ -62,7 +62,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let balance = account.get_balance("BTC").unwrap();
 
@@ -86,7 +86,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let open_orders = account.get_open_orders("LTCBTC").unwrap();
 
@@ -126,7 +126,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let open_orders = account.get_all_open_orders().unwrap();
 
@@ -168,7 +168,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let cancel_all_open_orders = account.cancel_all_open_orders("BTCUSDT").unwrap();
 
@@ -214,7 +214,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let order_status: Order = account.order_status("LTCBTC", 1).unwrap();
 
@@ -253,7 +253,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_order_status("LTCBTC", 1).unwrap();
 
@@ -271,7 +271,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account.limit_buy("LTCBTC", 1, 0.1).unwrap();
 
@@ -308,7 +308,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_limit_buy("LTCBTC", 1, 0.1).unwrap();
 
@@ -326,7 +326,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account.limit_sell("LTCBTC", 1, 0.1).unwrap();
 
@@ -363,7 +363,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_limit_sell("LTCBTC", 1, 0.1).unwrap();
 
@@ -384,7 +384,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account.market_buy("LTCBTC", 1).unwrap();
 
@@ -424,7 +424,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_market_buy("LTCBTC", 1).unwrap();
 
@@ -442,7 +442,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         match account.market_buy_using_quote_quantity("BNBBTC", 0.002) {
             Ok(answer) => {
@@ -465,7 +465,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_market_buy_using_quote_quantity("BNBBTC", 0.002)
@@ -488,7 +488,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account.market_sell("LTCBTC", 1).unwrap();
 
@@ -528,7 +528,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_market_sell("LTCBTC", 1).unwrap();
 
@@ -546,7 +546,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         match account.market_sell_using_quote_quantity("BNBBTC", 0.002) {
             Ok(answer) => {
@@ -569,7 +569,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_market_sell_using_quote_quantity("BNBBTC", 0.002)
@@ -589,7 +589,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account
             .stop_limit_buy_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
@@ -629,7 +629,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_stop_limit_buy_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
@@ -649,7 +649,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account
             .stop_limit_sell_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
@@ -689,7 +689,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_stop_limit_sell_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
@@ -709,7 +709,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account
             .custom_order(
@@ -758,7 +758,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_custom_order(
@@ -789,7 +789,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let cancelled_order = account.cancel_order("BTCUSDT", 1).unwrap();
 
@@ -814,7 +814,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_cancel_order("BTCUSDT", 1).unwrap();
 
@@ -834,7 +834,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(mockito::server_url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config);
+        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let histories = account.trade_history("BTCUSDT").unwrap();
 
