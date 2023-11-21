@@ -20,18 +20,30 @@
 - [ ] `Taker Buy/Sell Volume (MARKET_DATA)`
 */
 
-use crate::util::{build_request, build_signed_request};
-use crate::futures::model::{
-    AggTrades, BookTickers, KlineSummaries, KlineSummary, LiquidationOrders, MarkPrices,
-    OpenInterest, OpenInterestHist, OrderBook, PriceStats, SymbolPrice, Tickers, Trades,
-};
+use std::collections::BTreeMap;
+use std::convert::TryInto;
+
+use serde_json::Value;
+
+use crate::api::Futures;
+use crate::api::API;
 use crate::client::Client;
 use crate::errors::Result;
-use std::collections::BTreeMap;
-use serde_json::Value;
-use crate::api::API;
-use crate::api::Futures;
-use std::convert::TryInto;
+use crate::futures::model::AggTrades;
+use crate::futures::model::BookTickers;
+use crate::futures::model::KlineSummaries;
+use crate::futures::model::KlineSummary;
+use crate::futures::model::LiquidationOrders;
+use crate::futures::model::MarkPrices;
+use crate::futures::model::OpenInterest;
+use crate::futures::model::OpenInterestHist;
+use crate::futures::model::OrderBook;
+use crate::futures::model::PriceStats;
+use crate::futures::model::SymbolPrice;
+use crate::futures::model::Tickers;
+use crate::futures::model::Trades;
+use crate::util::build_request;
+use crate::util::build_signed_request;
 
 // TODO
 // Make enums for Strings
@@ -84,7 +96,10 @@ impl FuturesMarket {
 
     // TODO This may be incomplete, as it hasn't been tested
     pub fn get_historical_trades<S1, S2, S3>(
-        &self, symbol: S1, from_id: S2, limit: S3,
+        &self,
+        symbol: S1,
+        from_id: S2,
+        limit: S3,
     ) -> Result<Trades>
     where
         S1: Into<String>,
@@ -110,7 +125,12 @@ impl FuturesMarket {
     }
 
     pub fn get_agg_trades<S1, S2, S3, S4, S5>(
-        &self, symbol: S1, from_id: S2, start_time: S3, end_time: S4, limit: S5,
+        &self,
+        symbol: S1,
+        from_id: S2,
+        start_time: S3,
+        end_time: S4,
+        limit: S5,
     ) -> Result<AggTrades>
     where
         S1: Into<String>,
@@ -146,7 +166,12 @@ impl FuturesMarket {
     // Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
     // https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data
     pub fn get_klines<S1, S2, S3, S4, S5>(
-        &self, symbol: S1, interval: S2, limit: S3, start_time: S4, end_time: S5,
+        &self,
+        symbol: S1,
+        interval: S2,
+        limit: S3,
+        start_time: S4,
+        end_time: S5,
     ) -> Result<KlineSummaries>
     where
         S1: Into<String>,
@@ -262,7 +287,12 @@ impl FuturesMarket {
     }
 
     pub fn open_interest_statistics<S1, S2, S3, S4, S5>(
-        &self, symbol: S1, period: S2, limit: S3, start_time: S4, end_time: S5,
+        &self,
+        symbol: S1,
+        period: S2,
+        limit: S3,
+        start_time: S4,
+        end_time: S5,
     ) -> Result<Vec<OpenInterestHist>>
     where
         S1: Into<String>,

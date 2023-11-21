@@ -1,15 +1,23 @@
 use bytes::Bytes;
 use error_chain::bail;
 use hex::encode as hex_encode;
-use hmac::{Hmac, Mac};
-use tracing::debug;
-use crate::errors::{BinanceContentError, ErrorKind, Result};
-use reqwest::StatusCode;
+use hmac::Hmac;
+use hmac::Mac;
 use reqwest::blocking::Response;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, USER_AGENT, CONTENT_TYPE};
-use sha2::Sha256;
+use reqwest::header::HeaderMap;
+use reqwest::header::HeaderName;
+use reqwest::header::HeaderValue;
+use reqwest::header::CONTENT_TYPE;
+use reqwest::header::USER_AGENT;
+use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
+use sha2::Sha256;
+use tracing::debug;
+
 use crate::api::API;
+use crate::errors::BinanceContentError;
+use crate::errors::ErrorKind;
+use crate::errors::Result;
 
 #[derive(Clone, Debug)]
 pub struct Client {
@@ -32,7 +40,9 @@ impl Client {
     }
 
     pub fn get_signed<T: DeserializeOwned>(
-        &self, endpoint: API, request: Option<String>,
+        &self,
+        endpoint: API,
+        request: Option<String>,
     ) -> Result<T> {
         let url = self.sign_request(endpoint, request);
         let client = &self.inner_client;
@@ -82,7 +92,9 @@ impl Client {
     }
 
     pub fn delete_signed<T: DeserializeOwned>(
-        &self, endpoint: API, request: Option<String>,
+        &self,
+        endpoint: API,
+        request: Option<String>,
     ) -> Result<T> {
         let url = self.sign_request(endpoint, request);
         let client = &self.inner_client;

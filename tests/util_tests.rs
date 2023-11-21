@@ -2,10 +2,13 @@ use binance::util::*;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::BTreeMap;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use std::time::SystemTime;
+    use std::time::UNIX_EPOCH;
+
     use float_cmp::*;
+
+    use super::*;
 
     #[test]
     fn build_request_empty() {

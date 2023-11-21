@@ -1,18 +1,21 @@
 use std::collections::BTreeMap;
 use std::fmt::Display;
 
-use crate::util::build_signed_request;
-use crate::errors::Result;
-use crate::client::Client;
-use crate::api::{API, Futures};
-use crate::model::Empty;
+use super::model::AccountBalance;
+use super::model::AccountInformation;
+use super::model::CanceledOrder;
+use super::model::ChangeLeverageResponse;
+use super::model::PositionRisk;
+use super::model::Transaction;
 use crate::account::OrderSide;
-use crate::futures::model::{Order, TradeHistory};
-
-use super::model::{
-    ChangeLeverageResponse, Transaction, CanceledOrder, PositionRisk, AccountBalance,
-    AccountInformation,
-};
+use crate::api::Futures;
+use crate::api::API;
+use crate::client::Client;
+use crate::errors::Result;
+use crate::futures::model::Order;
+use crate::futures::model::TradeHistory;
+use crate::model::Empty;
+use crate::util::build_signed_request;
 
 #[derive(Clone)]
 pub struct FuturesAccount {
@@ -206,7 +209,10 @@ impl Display for IncomeType {
 
 impl FuturesAccount {
     pub fn limit_buy(
-        &self, symbol: impl Into<String>, qty: impl Into<f64>, price: f64,
+        &self,
+        symbol: impl Into<String>,
+        qty: impl Into<f64>,
+        price: f64,
         time_in_force: TimeInForce,
     ) -> Result<Transaction> {
         let buy = OrderRequest {
@@ -232,7 +238,10 @@ impl FuturesAccount {
     }
 
     pub fn limit_sell(
-        &self, symbol: impl Into<String>, qty: impl Into<f64>, price: f64,
+        &self,
+        symbol: impl Into<String>,
+        qty: impl Into<f64>,
+        price: f64,
         time_in_force: TimeInForce,
     ) -> Result<Transaction> {
         let sell = OrderRequest {
@@ -327,7 +336,9 @@ impl FuturesAccount {
     }
 
     pub fn cancel_order_with_client_id<S>(
-        &self, symbol: S, orig_client_order_id: String,
+        &self,
+        symbol: S,
+        orig_client_order_id: String,
     ) -> Result<CanceledOrder>
     where
         S: Into<String>,
@@ -422,7 +433,12 @@ impl FuturesAccount {
     }
 
     pub fn get_all_orders<S, F, N>(
-        &self, symbol: S, order_id: F, start_time: F, end_time: F, limit: N,
+        &self,
+        symbol: S,
+        order_id: F,
+        start_time: F,
+        end_time: F,
+        limit: N,
     ) -> Result<Vec<Order>>
     where
         S: Into<String>,
@@ -450,7 +466,12 @@ impl FuturesAccount {
     }
 
     pub fn get_user_trades<S, F, N>(
-        &self, symbol: S, from_id: F, start_time: F, end_time: F, limit: N,
+        &self,
+        symbol: S,
+        from_id: F,
+        start_time: F,
+        end_time: F,
+        limit: N,
     ) -> Result<Vec<TradeHistory>>
     where
         S: Into<String>,
@@ -554,7 +575,9 @@ impl FuturesAccount {
     }
 
     pub fn change_initial_leverage<S>(
-        &self, symbol: S, leverage: u8,
+        &self,
+        symbol: S,
+        leverage: u8,
     ) -> Result<ChangeLeverageResponse>
     where
         S: Into<String>,
@@ -603,7 +626,8 @@ impl FuturesAccount {
     }
 
     pub fn get_income(
-        &self, income_request: IncomeRequest,
+        &self,
+        income_request: IncomeRequest,
     ) -> Result<Vec<crate::futures::model::Income>> {
         let mut parameters: BTreeMap<String, String> = BTreeMap::new();
         if let Some(symbol) = income_request.symbol {

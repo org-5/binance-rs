@@ -1,7 +1,13 @@
-use serde::{Deserialize, Serialize};
-use serde_json::{from_value, Value};
 use std::convert::TryFrom;
-use crate::errors::{Error, ErrorKind, Result};
+
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::from_value;
+use serde_json::Value;
+
+use crate::errors::Error;
+use crate::errors::ErrorKind;
+use crate::errors::Result;
 
 #[derive(Deserialize, Clone)]
 pub struct Empty {}
@@ -573,7 +579,8 @@ pub struct OrderTradeEvent {
     pub m_ignore: bool,
 }
 
-/// The Aggregate Trade Streams push trade information that is aggregated for a single taker order.
+/// The Aggregate Trade Streams push trade information that is aggregated for a
+/// single taker order.
 ///
 /// Stream Name: \<symbol\>@aggTrade
 ///
@@ -617,7 +624,8 @@ pub struct AggrTradesEvent {
     pub m_ignore: bool,
 }
 
-/// The Trade Streams push raw trade information; each trade has a unique buyer and seller.
+/// The Trade Streams push raw trade information; each trade has a unique buyer
+/// and seller.
 ///
 /// Stream Name: \<symbol\>@trade
 ///
@@ -706,8 +714,11 @@ pub struct MarkPriceEvent {
     pub symbol: String,
 }
 
-// Object({"E": Number(1626118018407), "e": String("forceOrder"), "o": Object({"S": String("SELL"), "T": Number(1626118018404), "X": String("FILLED"), "ap": String("33028.07"), "f": String("IOC"), "l": String("0.010"), "o": String("LIMIT"), "p": String("32896.00"), "q": String("0.010"), "s": String("BTCUSDT"), "z": String("0.010")})})
-// https://binance-docs.github.io/apidocs/futures/en/#liquidation-order-streams
+// Object({"E": Number(1626118018407), "e": String("forceOrder"), "o":
+// Object({"S": String("SELL"), "T": Number(1626118018404), "X":
+// String("FILLED"), "ap": String("33028.07"), "f": String("IOC"), "l":
+// String("0.010"), "o": String("LIMIT"), "p": String("32896.00"), "q":
+// String("0.010"), "s": String("BTCUSDT"), "z": String("0.010")})}) https://binance-docs.github.io/apidocs/futures/en/#liquidation-order-streams
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -1245,8 +1256,8 @@ pub struct Network {
     pub withdraw_fee: f64,
     #[serde(with = "string_or_float")]
     pub withdraw_min: f64,
-    // pub insert_time: Option<u64>, //commented out for now, because they are not inside the actual response (only the api doc example)
-    // pub update_time: Option<u64>,
+    // pub insert_time: Option<u64>, //commented out for now, because they are not inside the
+    // actual response (only the api doc example) pub update_time: Option<u64>,
     pub withdraw_integer_multiple: Option<String>,
 }
 
@@ -1286,7 +1297,10 @@ pub struct HistoricalDataDownloadLink {
 pub(crate) mod string_or_float {
     use std::fmt;
 
-    use serde::{de, Serializer, Deserialize, Deserializer};
+    use serde::de;
+    use serde::Deserialize;
+    use serde::Deserializer;
+    use serde::Serializer;
 
     pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -1323,7 +1337,9 @@ pub(crate) mod string_or_float {
 pub(crate) mod string_or_float_opt {
     use std::fmt;
 
-    use serde::{Serializer, Deserialize, Deserializer};
+    use serde::Deserialize;
+    use serde::Deserializer;
+    use serde::Serializer;
 
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -1356,7 +1372,10 @@ pub(crate) mod string_or_float_opt {
 pub(crate) mod string_or_bool {
     use std::fmt;
 
-    use serde::{de, Serializer, Deserialize, Deserializer};
+    use serde::de;
+    use serde::Deserialize;
+    use serde::Deserializer;
+    use serde::Serializer;
 
     pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
     where

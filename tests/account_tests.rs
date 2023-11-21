@@ -1,13 +1,15 @@
+use binance::account::*;
 use binance::api::*;
 use binance::config::*;
-use binance::account::*;
 use binance::model::*;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use mockito::{mock, Matcher};
     use float_cmp::*;
+    use mockito::mock;
+    use mockito::Matcher;
+
+    use super::*;
 
     #[test]
     fn get_account() {

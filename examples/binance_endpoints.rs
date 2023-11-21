@@ -1,11 +1,11 @@
-use binance::api::*;
-use binance::savings::*;
-use binance::config::*;
-use binance::general::*;
 use binance::account::*;
+use binance::api::*;
+use binance::config::*;
+use binance::errors::ErrorKind as BinanceLibErrorKind;
+use binance::general::*;
 use binance::market::*;
 use binance::model::KlineSummary;
-use binance::errors::ErrorKind as BinanceLibErrorKind;
+use binance::savings::*;
 
 fn main() {
     // The general spot API endpoints; shown with
@@ -16,9 +16,9 @@ fn main() {
     // The market data API endpoint
     market_data();
 
-    // The account data API and savings API endpoint examples need an API key. Change those lines locally
-    // and uncomment the line below (and do not commit your api key :)).
-    //account();
+    // The account data API and savings API endpoint examples need an API key.
+    // Change those lines locally and uncomment the line below (and do not
+    // commit your api key :)). account();
     //savings();
 }
 

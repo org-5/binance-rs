@@ -1,21 +1,34 @@
-use crate::errors::Result;
-use crate::config::Config;
-use crate::model::{
-    AccountUpdateEvent, AggrTradesEvent, BookTickerEvent, ContinuousKlineEvent, DayTickerEvent,
-    DepthOrderBookEvent, IndexKlineEvent, IndexPriceEvent, KlineEvent, LiquidationEvent,
-    MarkPriceEvent, MiniTickerEvent, OrderBook, TradeEvent, UserDataStreamExpiredEvent,
-};
-use crate::futures::model;
-use error_chain::bail;
-use tracing::debug;
-use url::Url;
-use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::net::TcpStream;
-use tungstenite::{connect, Message};
+
+use error_chain::bail;
+use serde::Deserialize;
+use serde::Serialize;
+use tracing::debug;
+use tungstenite::connect;
+use tungstenite::handshake::client::Response;
 use tungstenite::protocol::WebSocket;
 use tungstenite::stream::MaybeTlsStream;
-use tungstenite::handshake::client::Response;
+use tungstenite::Message;
+use url::Url;
+
+use crate::config::Config;
+use crate::errors::Result;
+use crate::futures::model;
+use crate::model::AccountUpdateEvent;
+use crate::model::AggrTradesEvent;
+use crate::model::BookTickerEvent;
+use crate::model::ContinuousKlineEvent;
+use crate::model::DayTickerEvent;
+use crate::model::DepthOrderBookEvent;
+use crate::model::IndexKlineEvent;
+use crate::model::IndexPriceEvent;
+use crate::model::KlineEvent;
+use crate::model::LiquidationEvent;
+use crate::model::MarkPriceEvent;
+use crate::model::MiniTickerEvent;
+use crate::model::OrderBook;
+use crate::model::TradeEvent;
+use crate::model::UserDataStreamExpiredEvent;
 #[allow(clippy::all)]
 enum FuturesWebsocketAPI {
     Default,
@@ -73,9 +86,8 @@ pub enum FuturesWebsocketEvent {
     UserDataStreamExpiredEvent(UserDataStreamExpiredEvent),
 }
 
-pub struct FuturesWebSockets<'a> {
+pub struct FuturesWebSockets {
     pub socket: Option<(WebSocket<MaybeTlsStream<TcpStream>>, Response)>,
-    handler: Box<dyn FnMut(FuturesWebsocketEvent) -> Result<()> + 'a>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -102,23 +114,20 @@ enum FuturesEvents {
     UserDataStreamExpiredEvent(UserDataStreamExpiredEvent),
 }
 
-impl<'a> FuturesWebSockets<'a> {
-    pub fn new<Callback>(handler: Callback) -> FuturesWebSockets<'a>
-    where
-        Callback: FnMut(FuturesWebsocketEvent) -> Result<()> + 'a,
-    {
-        FuturesWebSockets {
-            socket: None,
-            handler: Box::new(handler),
-        }
+impl FuturesWebSockets {
+    pub fn new() -> FuturesWebSockets {
+        FuturesWebSockets { socket: None }
     }
 
-    pub fn connect(&mut self, market: &FuturesMarket, subscription: &'a str) -> Result<()> {
+    pub fn connect(&mut self, market: &FuturesMarket, subscription: &str) -> Result<()> {
         self.connect_wss(&FuturesWebsocketAPI::Default.params(market, subscription))
     }
 
     pub fn connect_with_config(
-        &mut self, market: &FuturesMarket, subscription: &'a str, config: &'a Config,
+        &mut self,
+        market: &FuturesMarket,
+        subscription: &str,
+        config: &Config,
     ) -> Result<()> {
         self.connect_wss(
             &FuturesWebsocketAPI::Custom(config.ws_endpoint.clone()).params(market, subscription),
@@ -126,7 +135,9 @@ impl<'a> FuturesWebSockets<'a> {
     }
 
     pub fn connect_multiple_streams(
-        &mut self, market: &FuturesMarket, endpoints: &[String],
+        &mut self,
+        market: &FuturesMarket,
+        endpoints: &[String],
     ) -> Result<()> {
         self.connect_wss(&FuturesWebsocketAPI::MultiStream.params(market, &endpoints.join("/")))
     }
@@ -150,66 +161,61 @@ impl<'a> FuturesWebSockets<'a> {
         bail!("Not able to close the connection");
     }
 
-    pub fn test_handle_msg(&mut self, msg: &str) -> Result<()> {
-        self.handle_msg(msg)
-    }
-
-    fn handle_msg(&mut self, msg: &str) -> Result<()> {
+    fn handle_msg(msg: &str) -> Result<FuturesWebsocketEvent> {
         let value: serde_json::Value = serde_json::from_str(msg)?;
 
         if let Some(data) = value.get("data") {
-            self.handle_msg(&data.to_string())?;
-            return Ok(());
+            return Self::handle_msg(&data.to_string());
         }
 
-        if let Ok(events) = serde_json::from_value::<FuturesEvents>(value) {
-            let action = match events {
-                FuturesEvents::Vec(v) => FuturesWebsocketEvent::DayTickerAll(v),
-                FuturesEvents::DayTickerEvent(v) => FuturesWebsocketEvent::DayTicker(v),
-                FuturesEvents::BookTickerEvent(v) => FuturesWebsocketEvent::BookTicker(v),
-                FuturesEvents::MiniTickerEvent(v) => FuturesWebsocketEvent::MiniTicker(v),
-                FuturesEvents::VecMiniTickerEvent(v) => FuturesWebsocketEvent::MiniTickerAll(v),
-                FuturesEvents::AccountUpdateEvent(v) => FuturesWebsocketEvent::AccountUpdate(v),
-                FuturesEvents::OrderTradeEvent(v) => FuturesWebsocketEvent::OrderTrade(v),
-                FuturesEvents::IndexPriceEvent(v) => FuturesWebsocketEvent::IndexPrice(v),
-                FuturesEvents::MarkPriceEvent(v) => FuturesWebsocketEvent::MarkPrice(v),
-                FuturesEvents::VecMarkPriceEvent(v) => FuturesWebsocketEvent::MarkPriceAll(v),
-                FuturesEvents::TradeEvent(v) => FuturesWebsocketEvent::Trade(v),
-                FuturesEvents::ContinuousKlineEvent(v) => FuturesWebsocketEvent::ContinuousKline(v),
-                FuturesEvents::IndexKlineEvent(v) => FuturesWebsocketEvent::IndexKline(v),
-                FuturesEvents::LiquidationEvent(v) => FuturesWebsocketEvent::Liquidation(v),
-                FuturesEvents::KlineEvent(v) => FuturesWebsocketEvent::Kline(v),
-                FuturesEvents::OrderBook(v) => FuturesWebsocketEvent::OrderBook(v),
-                FuturesEvents::DepthOrderBookEvent(v) => FuturesWebsocketEvent::DepthOrderBook(v),
-                FuturesEvents::AggrTradesEvent(v) => FuturesWebsocketEvent::AggrTrades(v),
-                FuturesEvents::UserDataStreamExpiredEvent(v) => {
-                    FuturesWebsocketEvent::UserDataStreamExpiredEvent(v)
-                }
-            };
-            (self.handler)(action)?;
-        }
-        Ok(())
+        let events = serde_json::from_value::<FuturesEvents>(value)?;
+        let events = match events {
+            FuturesEvents::Vec(v) => FuturesWebsocketEvent::DayTickerAll(v),
+            FuturesEvents::DayTickerEvent(v) => FuturesWebsocketEvent::DayTicker(v),
+            FuturesEvents::BookTickerEvent(v) => FuturesWebsocketEvent::BookTicker(v),
+            FuturesEvents::MiniTickerEvent(v) => FuturesWebsocketEvent::MiniTicker(v),
+            FuturesEvents::VecMiniTickerEvent(v) => FuturesWebsocketEvent::MiniTickerAll(v),
+            FuturesEvents::AccountUpdateEvent(v) => FuturesWebsocketEvent::AccountUpdate(v),
+            FuturesEvents::OrderTradeEvent(v) => FuturesWebsocketEvent::OrderTrade(v),
+            FuturesEvents::IndexPriceEvent(v) => FuturesWebsocketEvent::IndexPrice(v),
+            FuturesEvents::MarkPriceEvent(v) => FuturesWebsocketEvent::MarkPrice(v),
+            FuturesEvents::VecMarkPriceEvent(v) => FuturesWebsocketEvent::MarkPriceAll(v),
+            FuturesEvents::TradeEvent(v) => FuturesWebsocketEvent::Trade(v),
+            FuturesEvents::ContinuousKlineEvent(v) => FuturesWebsocketEvent::ContinuousKline(v),
+            FuturesEvents::IndexKlineEvent(v) => FuturesWebsocketEvent::IndexKline(v),
+            FuturesEvents::LiquidationEvent(v) => FuturesWebsocketEvent::Liquidation(v),
+            FuturesEvents::KlineEvent(v) => FuturesWebsocketEvent::Kline(v),
+            FuturesEvents::OrderBook(v) => FuturesWebsocketEvent::OrderBook(v),
+            FuturesEvents::DepthOrderBookEvent(v) => FuturesWebsocketEvent::DepthOrderBook(v),
+            FuturesEvents::AggrTradesEvent(v) => FuturesWebsocketEvent::AggrTrades(v),
+            FuturesEvents::UserDataStreamExpiredEvent(v) => {
+                FuturesWebsocketEvent::UserDataStreamExpiredEvent(v)
+            }
+        };
+        Ok(events)
     }
 
-    pub fn event_loop(&mut self, should_stop: &AtomicBool) -> Result<()> {
-        while !should_stop.load(Ordering::Relaxed) {
-            if let Some(ref mut socket) = self.socket {
-                let message = socket.0.read_message()?;
-                match message {
-                    Message::Text(msg) => {
-                        if let Err(e) = self.handle_msg(&msg) {
-                            bail!(format!("Error on handling stream message: {}", e));
-                        }
-                    }
-                    Message::Ping(_) => {
-                        debug!("Ping received.");
-                        socket.0.write_message(Message::Pong(vec![])).unwrap();
-                    }
-                    Message::Pong(_) | Message::Binary(_) | Message::Frame(_) => (),
-                    Message::Close(e) => bail!(format!("Disconnected {:?}", e)),
+    pub fn recv(&mut self) -> Result<Option<FuturesWebsocketEvent>> {
+        if let Some(ref mut socket) = self.socket {
+            let message = socket.0.read_message()?;
+            match message {
+                Message::Text(msg) => Ok(Some(Self::handle_msg(&msg)?)),
+                Message::Ping(_) => {
+                    debug!("Ping received.");
+                    socket.0.write_message(Message::Pong(vec![]))?;
+                    Ok(None)
                 }
+                Message::Pong(_) | Message::Binary(_) | Message::Frame(_) => Ok(None),
+                Message::Close(e) => bail!(format!("Disconnected {:?}", e)),
             }
+        } else {
+            bail!("Websocket connection not initialized")
         }
-        Ok(())
+    }
+}
+
+impl Default for FuturesWebSockets {
+    fn default() -> Self {
+        Self::new()
     }
 }

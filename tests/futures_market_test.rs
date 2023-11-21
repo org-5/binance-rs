@@ -5,8 +5,10 @@ use binance::futures::model::OpenInterestHist;
 
 #[cfg(test)]
 mod tests {
+    use mockito::mock;
+    use mockito::Matcher;
+
     use super::*;
-    use mockito::{mock, Matcher};
 
     #[test]
     fn open_interest_statistics() {

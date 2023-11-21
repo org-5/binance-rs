@@ -5,9 +5,10 @@ use binance::model::*;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use mockito::mock;
     use float_cmp::*;
+    use mockito::mock;
+
+    use super::*;
 
     #[test]
     fn ping() {

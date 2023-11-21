@@ -1,12 +1,16 @@
-use std::time::{UNIX_EPOCH, SystemTime};
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 use error_chain::bail;
 
-use crate::model::{Empty, ExchangeInformation, ServerTime, Symbol};
+use crate::api::Spot;
+use crate::api::API;
 use crate::client::Client;
 use crate::errors::Result;
-use crate::api::API;
-use crate::api::Spot;
+use crate::model::Empty;
+use crate::model::ExchangeInformation;
+use crate::model::ServerTime;
+use crate::model::Symbol;
 
 const CACHE_TTL: u64 = 600; // 10 minutes.
 
@@ -38,9 +42,9 @@ impl General {
                 if SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
-                    .as_secs() -
-                    last_update <
-                    CACHE_TTL
+                    .as_secs()
+                    - last_update
+                    < CACHE_TTL
                 {
                     return Ok((self.cache.clone().unwrap(), true));
                 }

@@ -4,11 +4,13 @@ use binance::futures::account::*;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use mockito::{mock, Matcher};
-    use float_cmp::*;
     use binance::account::OrderSide;
     use binance::futures::model::Transaction;
+    use float_cmp::*;
+    use mockito::mock;
+    use mockito::Matcher;
+
+    use super::*;
 
     #[test]
     fn change_initial_leverage() {

@@ -1,15 +1,23 @@
-use crate::util::build_request;
-use crate::model::{
-    AggTrade, AveragePrice, BookTickers, KlineSummaries, KlineSummary, OrderBook, PriceStats,
-    Prices, SymbolPrice, Tickers,
-};
+use std::collections::BTreeMap;
+use std::convert::TryInto;
+
+use serde_json::Value;
+
+use crate::api::Spot;
+use crate::api::API;
 use crate::client::Client;
 use crate::errors::Result;
-use std::collections::BTreeMap;
-use serde_json::Value;
-use crate::api::API;
-use crate::api::Spot;
-use std::convert::TryInto;
+use crate::model::AggTrade;
+use crate::model::AveragePrice;
+use crate::model::BookTickers;
+use crate::model::KlineSummaries;
+use crate::model::KlineSummary;
+use crate::model::OrderBook;
+use crate::model::PriceStats;
+use crate::model::Prices;
+use crate::model::SymbolPrice;
+use crate::model::Tickers;
+use crate::util::build_request;
 
 #[derive(Clone, Debug)]
 pub struct Market {
@@ -106,9 +114,15 @@ impl Market {
     /// Get aggregated historical trades.
     ///
     /// If you provide start_time, you also need to provide end_time.
-    /// If from_id, start_time and end_time are omitted, the most recent trades are fetched.
+    /// If from_id, start_time and end_time are omitted, the most recent trades
+    /// are fetched.
     pub fn get_agg_trades<S1, S2, S3, S4, S5>(
-        &self, symbol: S1, from_id: S2, start_time: S3, end_time: S4, limit: S5,
+        &self,
+        symbol: S1,
+        from_id: S2,
+        start_time: S3,
+        end_time: S4,
+        limit: S5,
     ) -> Result<Vec<AggTrade>>
     where
         S1: Into<String>,
@@ -143,7 +157,12 @@ impl Market {
     // Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
     // https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data
     pub fn get_klines<S1, S2, S3, S4, S5>(
-        &self, symbol: S1, interval: S2, limit: S3, start_time: S4, end_time: S5,
+        &self,
+        symbol: S1,
+        interval: S2,
+        limit: S3,
+        start_time: S4,
+        end_time: S5,
     ) -> Result<KlineSummaries>
     where
         S1: Into<String>,

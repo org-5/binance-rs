@@ -1,24 +1,33 @@
-use error_chain::bail;
-use tracing::{info, debug};
-
-use crate::util::build_signed_request;
-use crate::model::{
-    AccountInformation, Balance, Empty, Order, OrderCanceled, TradeHistory, Transaction,
-    HistoricalDataDownloadId, HistoricalDataDownloadLink,
-};
-use crate::client::Client;
-use crate::errors::Result;
+use std::cmp::min;
 use std::collections::BTreeMap;
 use std::fmt::Display;
+use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
-use std::{thread, fs};
-use std::cmp::min;
-use std::time::{Duration, Instant};
-use crate::api::{API, Futures};
-use crate::api::Spot;
+use std::thread;
+use std::time::Duration;
+use std::time::Instant;
 
+use error_chain::bail;
 use humantime::format_duration;
+use tracing::debug;
+use tracing::info;
+
+use crate::api::Futures;
+use crate::api::Spot;
+use crate::api::API;
+use crate::client::Client;
+use crate::errors::Result;
+use crate::model::AccountInformation;
+use crate::model::Balance;
+use crate::model::Empty;
+use crate::model::HistoricalDataDownloadId;
+use crate::model::HistoricalDataDownloadLink;
+use crate::model::Order;
+use crate::model::OrderCanceled;
+use crate::model::TradeHistory;
+use crate::model::Transaction;
+use crate::util::build_signed_request;
 
 #[derive(Clone)]
 pub struct Account {
@@ -171,7 +180,8 @@ impl Account {
 
     /// Place a test status order
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_order_status<S>(&self, symbol: S, order_id: u64) -> Result<()>
     where
         S: Into<String>,
@@ -209,7 +219,8 @@ impl Account {
 
     /// Place a test limit order - BUY
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_limit_buy<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<()>
     where
         S: Into<String>,
@@ -255,7 +266,8 @@ impl Account {
 
     /// Place a test LIMIT order - SELL
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_limit_sell<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<()>
     where
         S: Into<String>,
@@ -301,7 +313,8 @@ impl Account {
 
     /// Place a test MARKET order - BUY
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_market_buy<S, F>(&self, symbol: S, qty: F) -> Result<()>
     where
         S: Into<String>,
@@ -326,7 +339,9 @@ impl Account {
 
     // Place a MARKET order with quote quantity - BUY
     pub fn market_buy_using_quote_quantity<S, F>(
-        &self, symbol: S, quote_order_qty: F,
+        &self,
+        symbol: S,
+        quote_order_qty: F,
     ) -> Result<Transaction>
     where
         S: Into<String>,
@@ -348,9 +363,12 @@ impl Account {
 
     /// Place a test MARKET order with quote quantity - BUY
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_market_buy_using_quote_quantity<S, F>(
-        &self, symbol: S, quote_order_qty: F,
+        &self,
+        symbol: S,
+        quote_order_qty: F,
     ) -> Result<()>
     where
         S: Into<String>,
@@ -395,7 +413,8 @@ impl Account {
 
     /// Place a test MARKET order - SELL
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_market_sell<S, F>(&self, symbol: S, qty: F) -> Result<()>
     where
         S: Into<String>,
@@ -420,7 +439,9 @@ impl Account {
 
     // Place a MARKET order with quote quantity - SELL
     pub fn market_sell_using_quote_quantity<S, F>(
-        &self, symbol: S, quote_order_qty: F,
+        &self,
+        symbol: S,
+        quote_order_qty: F,
     ) -> Result<Transaction>
     where
         S: Into<String>,
@@ -442,9 +463,12 @@ impl Account {
 
     /// Place a test MARKET order with quote quantity - SELL
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_market_sell_using_quote_quantity<S, F>(
-        &self, symbol: S, quote_order_qty: F,
+        &self,
+        symbol: S,
+        quote_order_qty: F,
     ) -> Result<()>
     where
         S: Into<String>,
@@ -466,8 +490,9 @@ impl Account {
             .map(|_| ())
     }
 
-    /// Create a stop limit buy order for the given symbol, price and stop price.
-    /// Returning a `Transaction` value with the same parameters sent on the order.
+    /// Create a stop limit buy order for the given symbol, price and stop
+    /// price. Returning a `Transaction` value with the same parameters sent
+    /// on the order.
     ///
     ///```no_run
     /// use binance::api::Binance;
@@ -481,7 +506,12 @@ impl Account {
     /// }
     /// ```
     pub fn stop_limit_buy_order<S, F>(
-        &self, symbol: S, qty: F, price: f64, stop_price: f64, time_in_force: TimeInForce,
+        &self,
+        symbol: S,
+        qty: F,
+        price: f64,
+        stop_price: f64,
+        time_in_force: TimeInForce,
     ) -> Result<Transaction>
     where
         S: Into<String>,
@@ -502,10 +532,12 @@ impl Account {
         self.client.post_signed(API::Spot(Spot::Order), request)
     }
 
-    /// Create a stop limit buy test order for the given symbol, price and stop price.
-    /// Returning a `Transaction` value with the same parameters sent on the order.
+    /// Create a stop limit buy test order for the given symbol, price and stop
+    /// price. Returning a `Transaction` value with the same parameters sent
+    /// on the order.
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     ///
     ///```no_run
     /// use binance::api::Binance;
@@ -519,7 +551,12 @@ impl Account {
     /// }
     /// ```
     pub fn test_stop_limit_buy_order<S, F>(
-        &self, symbol: S, qty: F, price: f64, stop_price: f64, time_in_force: TimeInForce,
+        &self,
+        symbol: S,
+        qty: F,
+        price: f64,
+        stop_price: f64,
+        time_in_force: TimeInForce,
     ) -> Result<()>
     where
         S: Into<String>,
@@ -542,8 +579,9 @@ impl Account {
             .map(|_| ())
     }
 
-    /// Create a stop limit sell order for the given symbol, price and stop price.
-    /// Returning a `Transaction` value with the same parameters sent on the order.
+    /// Create a stop limit sell order for the given symbol, price and stop
+    /// price. Returning a `Transaction` value with the same parameters sent
+    /// on the order.
     ///
     ///```no_run
     /// use binance::api::Binance;
@@ -557,7 +595,12 @@ impl Account {
     /// }
     /// ```
     pub fn stop_limit_sell_order<S, F>(
-        &self, symbol: S, qty: F, price: f64, stop_price: f64, time_in_force: TimeInForce,
+        &self,
+        symbol: S,
+        qty: F,
+        price: f64,
+        stop_price: f64,
+        time_in_force: TimeInForce,
     ) -> Result<Transaction>
     where
         S: Into<String>,
@@ -578,10 +621,12 @@ impl Account {
         self.client.post_signed(API::Spot(Spot::Order), request)
     }
 
-    /// Create a stop limit sell order for the given symbol, price and stop price.
-    /// Returning a `Transaction` value with the same parameters sent on the order.
+    /// Create a stop limit sell order for the given symbol, price and stop
+    /// price. Returning a `Transaction` value with the same parameters sent
+    /// on the order.
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     ///
     ///```no_run
     /// use binance::api::Binance;
@@ -595,7 +640,12 @@ impl Account {
     /// }
     /// ```
     pub fn test_stop_limit_sell_order<S, F>(
-        &self, symbol: S, qty: F, price: f64, stop_price: f64, time_in_force: TimeInForce,
+        &self,
+        symbol: S,
+        qty: F,
+        price: f64,
+        stop_price: f64,
+        time_in_force: TimeInForce,
     ) -> Result<()>
     where
         S: Into<String>,
@@ -621,8 +671,15 @@ impl Account {
     /// Place a custom order
     #[allow(clippy::too_many_arguments)]
     pub fn custom_order<S, F>(
-        &self, symbol: S, qty: F, price: f64, stop_price: Option<f64>, order_side: OrderSide,
-        order_type: OrderType, time_in_force: TimeInForce, new_client_order_id: Option<String>,
+        &self,
+        symbol: S,
+        qty: F,
+        price: f64,
+        stop_price: Option<f64>,
+        order_side: OrderSide,
+        order_type: OrderType,
+        time_in_force: TimeInForce,
+        new_client_order_id: Option<String>,
     ) -> Result<Transaction>
     where
         S: Into<String>,
@@ -645,11 +702,19 @@ impl Account {
 
     /// Place a test custom order
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     #[allow(clippy::too_many_arguments)]
     pub fn test_custom_order<S, F>(
-        &self, symbol: S, qty: F, price: f64, stop_price: Option<f64>, order_side: OrderSide,
-        order_type: OrderType, time_in_force: TimeInForce, new_client_order_id: Option<String>,
+        &self,
+        symbol: S,
+        qty: F,
+        price: f64,
+        stop_price: Option<f64>,
+        order_side: OrderSide,
+        order_type: OrderType,
+        time_in_force: TimeInForce,
+        new_client_order_id: Option<String>,
     ) -> Result<()>
     where
         S: Into<String>,
@@ -687,7 +752,9 @@ impl Account {
     }
 
     pub fn cancel_order_with_client_id<S>(
-        &self, symbol: S, orig_client_order_id: String,
+        &self,
+        symbol: S,
+        orig_client_order_id: String,
     ) -> Result<OrderCanceled>
     where
         S: Into<String>,
@@ -702,7 +769,8 @@ impl Account {
     }
     /// Place a test cancel order
     ///
-    /// This order is sandboxed: it is validated, but not sent to the matching engine.
+    /// This order is sandboxed: it is validated, but not sent to the matching
+    /// engine.
     pub fn test_cancel_order<S>(&self, symbol: S, order_id: u64) -> Result<()>
     where
         S: Into<String>,
@@ -754,7 +822,8 @@ impl Account {
     }
 
     fn build_quote_quantity_order(
-        &self, order: OrderQuoteQuantityRequest,
+        &self,
+        order: OrderQuoteQuantityRequest,
     ) -> BTreeMap<String, String> {
         let mut order_parameters: BTreeMap<String, String> = BTreeMap::new();
 
@@ -776,7 +845,12 @@ impl Account {
     }
 
     pub fn download_hist_data_get_download_id(
-        &self, symbol: &str, start_time: u128, end_time: u128, data_type: &str, timestamp: u128,
+        &self,
+        symbol: &str,
+        start_time: u128,
+        end_time: u128,
+        data_type: &str,
+        timestamp: u128,
     ) -> Result<Vec<HistoricalDataDownloadId>> {
         let duration = std::time::Duration::from_millis((end_time - start_time) as u64);
         debug!(
@@ -820,7 +894,9 @@ impl Account {
     }
 
     pub fn download_hist_data_get_download_link(
-        &self, download_id: &str, timestamp: u128,
+        &self,
+        download_id: &str,
+        timestamp: u128,
     ) -> Result<String> {
         let mut parameters: BTreeMap<String, String> = BTreeMap::new();
         parameters.insert("downloadId".into(), download_id.into());

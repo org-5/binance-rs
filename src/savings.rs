@@ -1,10 +1,15 @@
-use crate::util::build_signed_request;
-use crate::model::{AssetDetail, CoinInfo, DepositAddress, SpotFuturesTransferType, TransactionId};
+use std::collections::BTreeMap;
+
+use crate::api::Sapi;
+use crate::api::API;
 use crate::client::Client;
 use crate::errors::Result;
-use std::collections::BTreeMap;
-use crate::api::API;
-use crate::api::Sapi;
+use crate::model::AssetDetail;
+use crate::model::CoinInfo;
+use crate::model::DepositAddress;
+use crate::model::SpotFuturesTransferType;
+use crate::model::TransactionId;
+use crate::util::build_signed_request;
 
 #[derive(Clone)]
 pub struct Savings {
@@ -34,7 +39,8 @@ impl Savings {
     /// Fetch deposit address with network.
     ///
     /// You can get the available networks using `get_all_coins`.
-    /// If no network is specified, the address for the default network is returned.
+    /// If no network is specified, the address for the default network is
+    /// returned.
     pub fn deposit_address<S>(&self, coin: S, network: Option<String>) -> Result<DepositAddress>
     where
         S: Into<String>,
@@ -50,7 +56,10 @@ impl Savings {
     }
 
     pub fn transfer_funds<S>(
-        &self, asset: S, amount: f64, transfer_type: SpotFuturesTransferType,
+        &self,
+        asset: S,
+        amount: f64,
+        transfer_type: SpotFuturesTransferType,
     ) -> Result<TransactionId>
     where
         S: Into<String>,

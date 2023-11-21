@@ -1,15 +1,15 @@
 use crate::account::Account;
 use crate::client::Client;
 use crate::config::Config;
+use crate::errors::Result;
 use crate::futures::account::FuturesAccount;
 use crate::futures::general::FuturesGeneral;
 use crate::futures::market::FuturesMarket;
 use crate::futures::userstream::FuturesUserStream;
 use crate::general::General;
 use crate::market::Market;
-use crate::userstream::UserStream;
 use crate::savings::Savings;
-use crate::errors::Result;
+use crate::userstream::UserStream;
 
 #[allow(clippy::all)]
 #[derive(Clone)]
@@ -190,7 +190,9 @@ impl From<API> for String {
 pub trait Binance: Sized {
     fn new(api_key: Option<String>, secret_key: Option<String>) -> Result<Self>;
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<Self>;
 }
 
@@ -200,7 +202,9 @@ impl Binance for General {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<General> {
         Ok(General {
             client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone())?,
@@ -216,7 +220,9 @@ impl Binance for Account {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<Account> {
         Ok(Account {
             client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone())?,
@@ -231,7 +237,9 @@ impl Binance for Savings {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<Self> {
         Ok(Self {
             client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone())?,
@@ -246,7 +254,9 @@ impl Binance for Market {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<Market> {
         Ok(Market {
             client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone())?,
@@ -261,7 +271,9 @@ impl Binance for UserStream {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<UserStream> {
         Ok(UserStream {
             client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone())?,
@@ -280,7 +292,9 @@ impl Binance for FuturesGeneral {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<FuturesGeneral> {
         Ok(FuturesGeneral {
             client: Client::new(
@@ -300,7 +314,9 @@ impl Binance for FuturesMarket {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<FuturesMarket> {
         Ok(FuturesMarket {
             client: Client::new(
@@ -319,7 +335,9 @@ impl Binance for FuturesAccount {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<Self> {
         Ok(Self {
             client: Client::new(
@@ -338,7 +356,9 @@ impl Binance for FuturesUserStream {
     }
 
     fn new_with_config(
-        api_key: Option<String>, secret_key: Option<String>, config: &Config,
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
     ) -> Result<FuturesUserStream> {
         Ok(FuturesUserStream {
             client: Client::new(

@@ -1,12 +1,15 @@
-use std::time::{UNIX_EPOCH, SystemTime};
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 use error_chain::bail;
 
-use crate::futures::model::{ExchangeInformation, ServerTime, Symbol};
+use crate::api::Futures;
+use crate::api::API;
 use crate::client::Client;
 use crate::errors::Result;
-use crate::api::API;
-use crate::api::Futures;
+use crate::futures::model::ExchangeInformation;
+use crate::futures::model::ServerTime;
+use crate::futures::model::Symbol;
 
 const CACHE_TTL: u64 = 600; // 10 minutes.
 
@@ -49,14 +52,14 @@ impl FuturesGeneral {
     }
 
     pub fn has_cache(&self) -> bool {
-        self.cache.is_some() &&
-            self.last_update.is_some() &&
-            SystemTime::now()
+        self.cache.is_some()
+            && self.last_update.is_some()
+            && SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
-                .as_secs() -
-                self.last_update.unwrap() <
-                CACHE_TTL
+                .as_secs()
+                - self.last_update.unwrap()
+                < CACHE_TTL
     }
 
     // Get Symbol information
