@@ -36,20 +36,15 @@ impl General {
     // Obtain exchange information
     // - Current exchange trading rules and symbol information
     // The boolean is true if the cache was used.
-    pub fn exchange_info(&mut self) -> Result<(ExchangeInformation, bool)> {
-        if self.cache.is_some() {
-            if let Some(last_update) = self.last_update {
-                if SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs()
-                    - last_update
-                    < CACHE_TTL
-                {
-                    return Ok((self.cache.clone().unwrap(), true));
-                }
-            }
+    pub fn exchange_info(&self) -> Result<(ExchangeInformation, bool)> {
+        if self.has_cache() {
+            Ok((self.cache.clone().unwrap(), true))
+        } else {
+            Err("No cache".into())
         }
+    }
+
+    pub fn update_cache(&mut self) -> Result<()> {
         let info: ExchangeInformation = self.client.get(API::Spot(Spot::ExchangeInfo), None)?;
         self.cache = Some(info.clone());
         self.last_update = Some(
@@ -58,7 +53,18 @@ impl General {
                 .unwrap()
                 .as_secs(),
         );
-        Ok((info, false))
+        Ok(())
+    }
+
+    pub fn has_cache(&self) -> bool {
+        self.cache.is_some()
+            && self.last_update.is_some()
+            && SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+                - self.last_update.unwrap()
+                < CACHE_TTL
     }
 
     // Get Symbol information

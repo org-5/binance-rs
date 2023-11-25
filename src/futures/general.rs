@@ -35,10 +35,15 @@ impl FuturesGeneral {
     // Obtain exchange information
     // - Current exchange trading rules and symbol information
     // The boolean is true if the cache was used.
-    pub fn exchange_info(&mut self) -> Result<(ExchangeInformation, bool)> {
+    pub fn exchange_info(&self) -> Result<(ExchangeInformation, bool)> {
         if self.has_cache() {
-            return Ok((self.cache.clone().unwrap(), true));
+            Ok((self.cache.clone().unwrap(), true))
+        } else {
+            Err("No cache".into())
         }
+    }
+
+    pub fn update_cache(&mut self) -> Result<()> {
         let info: ExchangeInformation =
             self.client.get(API::Futures(Futures::ExchangeInfo), None)?;
         self.cache = Some(info.clone());
@@ -48,7 +53,7 @@ impl FuturesGeneral {
                 .unwrap()
                 .as_secs(),
         );
-        Ok((info, false))
+        Ok(())
     }
 
     pub fn has_cache(&self) -> bool {
