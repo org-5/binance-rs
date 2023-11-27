@@ -28,18 +28,19 @@ mod tests {
 
     #[test]
     fn get_server_time() {
-        let mock_server_time = mock("GET", "/api/v3/time")
+        let mock_server_time = mock("GET", "/api/v3/exchangeInfo")
             .with_header("content-type", "application/json;charset=UTF-8")
-            .with_body_from_file("tests/mocks/general/server_time.json")
+            .with_body_from_file("tests/mocks/general/exchange_info.json")
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let general: General = Binance::new_with_config(None, None, &config).unwrap();
+        let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
+        general.update_cache().unwrap();
 
         let server_time = general.get_server_time().unwrap();
         mock_server_time.assert();
 
-        assert_eq!(server_time.server_time, 1499827319559);
+        assert_eq!(server_time.server_time, 1614694549948);
     }
 
     #[test]
@@ -50,7 +51,8 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
-        let general: General = Binance::new_with_config(None, None, &config).unwrap();
+        let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
+        general.update_cache().unwrap();
 
         let exchange_info = general.exchange_info().unwrap().0;
         mock_exchange_info.assert();
@@ -67,6 +69,7 @@ mod tests {
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
         let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
+        general.update_cache().unwrap();
 
         let symbol = general.get_symbol_info("BNBBTC").unwrap();
         mock_exchange_info.assert();

@@ -30,7 +30,13 @@ impl General {
 
     // Check server time
     pub fn get_server_time(&self) -> Result<ServerTime> {
-        self.client.get(API::Spot(Spot::Time), None)
+        if self.has_cache() {
+            Ok(ServerTime {
+                server_time: self.cache.as_ref().unwrap().server_time,
+            })
+        } else {
+            Err("No cache".into())
+        }
     }
 
     // Obtain exchange information
