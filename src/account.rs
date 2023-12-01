@@ -1,17 +1,10 @@
 use std::cmp::min;
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::fs;
-use std::io::Write;
-use std::path::PathBuf;
-use std::thread;
-use std::time::Duration;
-use std::time::Instant;
 
 use error_chain::bail;
 use humantime::format_duration;
 use tracing::debug;
-use tracing::info;
 
 use crate::api::Futures;
 use crate::api::Spot;
@@ -22,7 +15,6 @@ use crate::model::AccountInformation;
 use crate::model::Balance;
 use crate::model::Empty;
 use crate::model::HistoricalDataDownloadId;
-use crate::model::HistoricalDataDownloadLink;
 use crate::model::Order;
 use crate::model::OrderCanceled;
 use crate::model::TradeHistory;
@@ -105,18 +97,19 @@ impl Display for TimeInForce {
 
 impl Account {
     // Account Information
-    pub fn get_account(&self) -> Result<AccountInformation> {
+    pub async fn get_account(&self) -> Result<AccountInformation> {
         let request = build_signed_request(BTreeMap::new(), self.recv_window)?;
         self.client
             .get_signed(API::Spot(Spot::Account), Some(request))
+            .await
     }
 
     // Balance for a single Asset
-    pub fn get_balance<S>(&self, asset: S) -> Result<Balance>
+    pub async fn get_balance<S>(&self, asset: S) -> Result<Balance>
     where
         S: Into<String>,
     {
-        match self.get_account() {
+        match self.get_account().await {
             Ok(account) => {
                 let cmp_asset = asset.into();
                 for balance in account.balances {
@@ -131,7 +124,7 @@ impl Account {
     }
 
     // Current open orders for ONE symbol
-    pub fn get_open_orders<S>(&self, symbol: S) -> Result<Vec<Order>>
+    pub async fn get_open_orders<S>(&self, symbol: S) -> Result<Vec<Order>>
     where
         S: Into<String>,
     {
@@ -141,19 +134,21 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .get_signed(API::Spot(Spot::OpenOrders), Some(request))
+            .await
     }
 
     // All current open orders
-    pub fn get_all_open_orders(&self) -> Result<Vec<Order>> {
+    pub async fn get_all_open_orders(&self) -> Result<Vec<Order>> {
         let parameters: BTreeMap<String, String> = BTreeMap::new();
 
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .get_signed(API::Spot(Spot::OpenOrders), Some(request))
+            .await
     }
 
     // Cancel all open orders for a single symbol
-    pub fn cancel_all_open_orders<S>(&self, symbol: S) -> Result<Vec<OrderCanceled>>
+    pub async fn cancel_all_open_orders<S>(&self, symbol: S) -> Result<Vec<OrderCanceled>>
     where
         S: Into<String>,
     {
@@ -162,10 +157,11 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .delete_signed(API::Spot(Spot::OpenOrders), Some(request))
+            .await
     }
 
     // Check an order's status
-    pub fn order_status<S>(&self, symbol: S, order_id: u64) -> Result<Order>
+    pub async fn order_status<S>(&self, symbol: S, order_id: u64) -> Result<Order>
     where
         S: Into<String>,
     {
@@ -176,13 +172,14 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .get_signed(API::Spot(Spot::Order), Some(request))
+            .await
     }
 
     /// Place a test status order
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_order_status<S>(&self, symbol: S, order_id: u64) -> Result<()>
+    pub async fn test_order_status<S>(&self, symbol: S, order_id: u64) -> Result<()>
     where
         S: Into<String>,
     {
@@ -193,11 +190,12 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .get_signed::<Empty>(API::Spot(Spot::OrderTest), Some(request))
+            .await
             .map(|_| ())
     }
 
     // Place a LIMIT order - BUY
-    pub fn limit_buy<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<Transaction>
+    pub async fn limit_buy<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<Transaction>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -214,14 +212,16 @@ impl Account {
         };
         let order = self.build_order(buy);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Place a test limit order - BUY
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_limit_buy<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<()>
+    pub async fn test_limit_buy<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<()>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -240,11 +240,12 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
     // Place a LIMIT order - SELL
-    pub fn limit_sell<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<Transaction>
+    pub async fn limit_sell<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<Transaction>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -261,14 +262,16 @@ impl Account {
         };
         let order = self.build_order(sell);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Place a test LIMIT order - SELL
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_limit_sell<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<()>
+    pub async fn test_limit_sell<S, F>(&self, symbol: S, qty: F, price: f64) -> Result<()>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -287,11 +290,12 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
     // Place a MARKET order - BUY
-    pub fn market_buy<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
+    pub async fn market_buy<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -308,14 +312,16 @@ impl Account {
         };
         let order = self.build_order(buy);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Place a test MARKET order - BUY
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_market_buy<S, F>(&self, symbol: S, qty: F) -> Result<()>
+    pub async fn test_market_buy<S, F>(&self, symbol: S, qty: F) -> Result<()>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -334,11 +340,12 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
     // Place a MARKET order with quote quantity - BUY
-    pub fn market_buy_using_quote_quantity<S, F>(
+    pub async fn market_buy_using_quote_quantity<S, F>(
         &self,
         symbol: S,
         quote_order_qty: F,
@@ -358,14 +365,16 @@ impl Account {
         };
         let order = self.build_quote_quantity_order(buy);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Place a test MARKET order with quote quantity - BUY
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_market_buy_using_quote_quantity<S, F>(
+    pub async fn test_market_buy_using_quote_quantity<S, F>(
         &self,
         symbol: S,
         quote_order_qty: F,
@@ -387,11 +396,12 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
     // Place a MARKET order - SELL
-    pub fn market_sell<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
+    pub async fn market_sell<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -408,14 +418,16 @@ impl Account {
         };
         let order = self.build_order(sell);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Place a test MARKET order - SELL
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_market_sell<S, F>(&self, symbol: S, qty: F) -> Result<()>
+    pub async fn test_market_sell<S, F>(&self, symbol: S, qty: F) -> Result<()>
     where
         S: Into<String>,
         F: Into<f64>,
@@ -434,11 +446,12 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
     // Place a MARKET order with quote quantity - SELL
-    pub fn market_sell_using_quote_quantity<S, F>(
+    pub async fn market_sell_using_quote_quantity<S, F>(
         &self,
         symbol: S,
         quote_order_qty: F,
@@ -458,14 +471,16 @@ impl Account {
         };
         let order = self.build_quote_quantity_order(sell);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Place a test MARKET order with quote quantity - SELL
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_market_sell_using_quote_quantity<S, F>(
+    pub async fn test_market_sell_using_quote_quantity<S, F>(
         &self,
         symbol: S,
         quote_order_qty: F,
@@ -487,6 +502,7 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
@@ -505,7 +521,7 @@ impl Account {
     ///     let result = account.stop_limit_buy_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC);
     /// }
     /// ```
-    pub fn stop_limit_buy_order<S, F>(
+    pub async fn stop_limit_buy_order<S, F>(
         &self,
         symbol: S,
         qty: F,
@@ -529,7 +545,9 @@ impl Account {
         };
         let order = self.build_order(sell);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Create a stop limit buy test order for the given symbol, price and stop
@@ -550,7 +568,7 @@ impl Account {
     ///     let result = account.test_stop_limit_buy_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC);
     /// }
     /// ```
-    pub fn test_stop_limit_buy_order<S, F>(
+    pub async fn test_stop_limit_buy_order<S, F>(
         &self,
         symbol: S,
         qty: F,
@@ -576,6 +594,7 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
@@ -594,7 +613,7 @@ impl Account {
     ///     let result = account.stop_limit_sell_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC);
     /// }
     /// ```
-    pub fn stop_limit_sell_order<S, F>(
+    pub async fn stop_limit_sell_order<S, F>(
         &self,
         symbol: S,
         qty: F,
@@ -618,7 +637,9 @@ impl Account {
         };
         let order = self.build_order(sell);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Create a stop limit sell order for the given symbol, price and stop
@@ -639,7 +660,7 @@ impl Account {
     ///     let result = account.test_stop_limit_sell_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC);
     /// }
     /// ```
-    pub fn test_stop_limit_sell_order<S, F>(
+    pub async fn test_stop_limit_sell_order<S, F>(
         &self,
         symbol: S,
         qty: F,
@@ -665,12 +686,13 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
     /// Place a custom order
     #[allow(clippy::too_many_arguments)]
-    pub fn custom_order<S, F>(
+    pub async fn custom_order<S, F>(
         &self,
         symbol: S,
         qty: F,
@@ -697,7 +719,9 @@ impl Account {
         };
         let order = self.build_order(sell);
         let request = build_signed_request(order, self.recv_window)?;
-        self.client.post_signed(API::Spot(Spot::Order), request)
+        self.client
+            .post_signed(API::Spot(Spot::Order), request)
+            .await
     }
 
     /// Place a test custom order
@@ -705,7 +729,7 @@ impl Account {
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
     #[allow(clippy::too_many_arguments)]
-    pub fn test_custom_order<S, F>(
+    pub async fn test_custom_order<S, F>(
         &self,
         symbol: S,
         qty: F,
@@ -734,11 +758,12 @@ impl Account {
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed::<Empty>(API::Spot(Spot::OrderTest), request)
+            .await
             .map(|_| ())
     }
 
     // Check an order's status
-    pub fn cancel_order<S>(&self, symbol: S, order_id: u64) -> Result<OrderCanceled>
+    pub async fn cancel_order<S>(&self, symbol: S, order_id: u64) -> Result<OrderCanceled>
     where
         S: Into<String>,
     {
@@ -749,9 +774,10 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .delete_signed(API::Spot(Spot::Order), Some(request))
+            .await
     }
 
-    pub fn cancel_order_with_client_id<S>(
+    pub async fn cancel_order_with_client_id<S>(
         &self,
         symbol: S,
         orig_client_order_id: String,
@@ -766,12 +792,13 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .delete_signed(API::Spot(Spot::Order), Some(request))
+            .await
     }
     /// Place a test cancel order
     ///
     /// This order is sandboxed: it is validated, but not sent to the matching
     /// engine.
-    pub fn test_cancel_order<S>(&self, symbol: S, order_id: u64) -> Result<()>
+    pub async fn test_cancel_order<S>(&self, symbol: S, order_id: u64) -> Result<()>
     where
         S: Into<String>,
     {
@@ -781,11 +808,12 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .delete_signed::<Empty>(API::Spot(Spot::OrderTest), Some(request))
+            .await
             .map(|_| ())
     }
 
     // Trade history
-    pub fn trade_history<S>(&self, symbol: S) -> Result<Vec<TradeHistory>>
+    pub async fn trade_history<S>(&self, symbol: S) -> Result<Vec<TradeHistory>>
     where
         S: Into<String>,
     {
@@ -795,6 +823,7 @@ impl Account {
         let request = build_signed_request(parameters, self.recv_window)?;
         self.client
             .get_signed(API::Spot(Spot::MyTrades), Some(request))
+            .await
     }
 
     fn build_order(&self, order: OrderRequest) -> BTreeMap<String, String> {
@@ -844,7 +873,7 @@ impl Account {
         order_parameters
     }
 
-    pub fn download_hist_data_get_download_id(
+    pub async fn download_hist_data_get_download_id(
         &self,
         symbol: &str,
         start_time: u128,
@@ -881,7 +910,8 @@ impl Account {
 
             let res: HistoricalDataDownloadId = self
                 .client
-                .post_signed(API::Futures(Futures::HistoricalDataDownloadId), request)?;
+                .post_signed(API::Futures(Futures::HistoricalDataDownloadId), request)
+                .await?;
 
             ids.push(res);
 
@@ -893,80 +923,88 @@ impl Account {
         Ok(ids)
     }
 
-    pub fn download_hist_data_get_download_link(
-        &self,
-        download_id: &str,
-        timestamp: u128,
-    ) -> Result<String> {
-        let mut parameters: BTreeMap<String, String> = BTreeMap::new();
-        parameters.insert("downloadId".into(), download_id.into());
-        parameters.insert("timestamp".into(), timestamp.to_string());
-        let start_time = Instant::now();
+    // pub fn download_hist_data_get_download_link(
+    //     &self,
+    //     download_id: &str,
+    //     timestamp: u128,
+    // ) -> Result<String> {
+    //     let mut parameters: BTreeMap<String, String> = BTreeMap::new();
+    //     parameters.insert("downloadId".into(), download_id.into());
+    //     parameters.insert("timestamp".into(), timestamp.to_string());
+    //     let start_time = Instant::now();
 
-        let res = loop {
-            let request = build_signed_request(parameters.clone(), self.recv_window)?;
+    //     let res = loop {
+    //         let request = build_signed_request(parameters.clone(),
+    // self.recv_window)?;
 
-            let res: HistoricalDataDownloadLink = self.client.get_signed(
-                API::Futures(Futures::HistoricalDataDownloadLink),
-                Some(request),
-            )?;
+    //         let res: HistoricalDataDownloadLink = self.client.get_signed(
+    //             API::Futures(Futures::HistoricalDataDownloadLink),
+    //             Some(request),
+    //         )?;
 
-            // result is Link is preparing, please try again later
-            if res
-                .link
-                .contains("Link is preparing; please request later.")
-            {
-                info!(
-                    res.link,
-                    "Link is preparing; please request later, waited for a total of {:?} so far. sleeping 60s",
-                    Instant::now() - start_time
-                );
-                thread::sleep(Duration::from_secs(60));
-                continue;
-            }
-            if !res.link.starts_with("https://") {
-                // "received something, but not a link".into() show link
-                return Err(format!("received something, but not a link: {}", res.link).into());
-            }
+    //         // result is Link is preparing, please try again later
+    //         if res
+    //             .link
+    //             .contains("Link is preparing; please request later.")
+    //         {
+    //             info!(
+    //                 res.link,
+    //                 "Link is preparing; please request later, waited for a total
+    // of {:?} so far. sleeping 60s",                 Instant::now() -
+    // start_time             );
+    //             thread::sleep(Duration::from_secs(60));
+    //             continue;
+    //         }
+    //         if !res.link.starts_with("https://") {
+    //             // "received something, but not a link".into() show link
+    //             return Err(format!("received something, but not a link: {}",
+    // res.link).into());         }
 
-            break res.link;
-        };
+    //         break res.link;
+    //     };
 
-        Ok(res)
-    }
+    //     Ok(res)
+    // }
 
-    pub fn download_hist_data_file(&self, url: &str, path: PathBuf) -> Result<PathBuf> {
-        if path.ends_with("/") {
-            return Err("must be a path to a file".into());
-        }
-        if path.extension().is_none() {
-            return Err("must have a .tar.gz extension".into());
-        }
+    // pub async fn download_hist_data_file(&self, url: &str, path: PathBuf) ->
+    // Result<PathBuf> {     if path.ends_with("/") {
+    //         return Err("must be a path to a file".into());
+    //     }
+    //     if path.extension().is_none() {
+    //         return Err("must have a .tar.gz extension".into());
+    //     }
 
-        let resp = ureq::get(url).call().unwrap();
+    //     let resp = reqwest::get(url).await?;
 
-        let len: usize = resp.header("Content-Length").unwrap().parse().unwrap();
+    //     let len: usize = resp
+    //         .headers()
+    //         .get("Content-Length")
+    //         .unwrap()
+    //         .to_str()
+    //         .unwrap()
+    //         .parse()
+    //         .unwrap();
 
-        let mut buffer = [0; 10_000];
-        let mut reader = resp.into_reader();
-        let mut cursor = 0;
+    //     let mut buffer = [0; 10_000];
+    //     let mut reader = resp.into_reader();
+    //     let mut cursor = 0;
 
-        fs::create_dir_all(path.parent().unwrap())?;
+    //     fs::create_dir_all(path.parent().unwrap())?;
 
-        let mut file = fs::File::create(path.clone()).unwrap();
+    //     let mut file = fs::File::create(path.clone()).unwrap();
 
-        loop {
-            let b_len = reader.read(&mut buffer).unwrap();
+    //     loop {
+    //         let b_len = reader.read(&mut buffer).unwrap();
 
-            // write to file
-            file.write_all(&buffer[0..b_len]).unwrap();
+    //         // write to file
+    //         file.write_all(&buffer[0..b_len]).unwrap();
 
-            cursor += b_len;
-            if cursor >= len {
-                break;
-            }
-        }
+    //         cursor += b_len;
+    //         if cursor >= len {
+    //             break;
+    //         }
+    //     }
 
-        Ok(path)
-    }
+    //     Ok(path)
+    // }
 }

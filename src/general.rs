@@ -23,8 +23,10 @@ pub struct General {
 
 impl General {
     // Test connectivity
-    pub fn ping(&self) -> Result<String> {
-        self.client.get::<Empty>(API::Spot(Spot::Ping), None)?;
+    pub async fn ping(&self) -> Result<String> {
+        self.client
+            .get::<Empty>(API::Spot(Spot::Ping), None)
+            .await?;
         Ok("pong".into())
     }
 
@@ -50,8 +52,9 @@ impl General {
         }
     }
 
-    pub fn update_cache(&mut self) -> Result<()> {
-        let info: ExchangeInformation = self.client.get(API::Spot(Spot::ExchangeInfo), None)?;
+    pub async fn update_cache(&mut self) -> Result<()> {
+        let info: ExchangeInformation =
+            self.client.get(API::Spot(Spot::ExchangeInfo), None).await?;
         self.cache = Some(info.clone());
         self.last_update = Some(
             SystemTime::now()

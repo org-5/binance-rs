@@ -22,14 +22,14 @@ pub struct FuturesGeneral {
 
 impl FuturesGeneral {
     // Test connectivity
-    pub fn ping(&self) -> Result<String> {
-        self.client.get(API::Futures(Futures::Ping), None)?;
+    pub async fn ping(&self) -> Result<String> {
+        self.client.get(API::Futures(Futures::Ping), None).await?;
         Ok("pong".into())
     }
 
     // Check server time
-    pub fn get_server_time(&self) -> Result<ServerTime> {
-        self.client.get(API::Futures(Futures::Time), None)
+    pub async fn get_server_time(&self) -> Result<ServerTime> {
+        self.client.get(API::Futures(Futures::Time), None).await
     }
 
     // Obtain exchange information
@@ -43,9 +43,11 @@ impl FuturesGeneral {
         }
     }
 
-    pub fn update_cache(&mut self) -> Result<()> {
-        let info: ExchangeInformation =
-            self.client.get(API::Futures(Futures::ExchangeInfo), None)?;
+    pub async fn update_cache(&mut self) -> Result<()> {
+        let info: ExchangeInformation = self
+            .client
+            .get(API::Futures(Futures::ExchangeInfo), None)
+            .await?;
         self.cache = Some(info.clone());
         self.last_update = Some(
             SystemTime::now()

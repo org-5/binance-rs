@@ -7,11 +7,12 @@ use binance::model::*;
 mod tests {
     use float_cmp::*;
     use mockito::mock;
+    use tokio::test;
 
     use super::*;
 
     #[test]
-    fn ping() {
+    async fn ping() {
         let mock_ping = mock("GET", "/api/v3/ping")
             .with_header("content-type", "application/json;charset=UTF-8")
             .with_body("{}")
@@ -20,14 +21,14 @@ mod tests {
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
         let general: General = Binance::new_with_config(None, None, &config).unwrap();
 
-        let pong = general.ping().unwrap();
+        let pong = general.ping().await.unwrap();
         mock_ping.assert();
 
         assert_eq!(pong, "pong");
     }
 
     #[test]
-    fn get_server_time() {
+    async fn get_server_time() {
         let mock_server_time = mock("GET", "/api/v3/exchangeInfo")
             .with_header("content-type", "application/json;charset=UTF-8")
             .with_body_from_file("tests/mocks/general/exchange_info.json")
@@ -35,7 +36,7 @@ mod tests {
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
         let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
-        general.update_cache().unwrap();
+        general.update_cache().await.unwrap();
 
         let server_time = general.get_server_time().unwrap();
         mock_server_time.assert();
@@ -44,7 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn exchange_info() {
+    async fn exchange_info() {
         let mock_exchange_info = mock("GET", "/api/v3/exchangeInfo")
             .with_header("content-type", "application/json;charset=UTF-8")
             .with_body_from_file("tests/mocks/general/exchange_info.json")
@@ -52,7 +53,7 @@ mod tests {
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
         let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
-        general.update_cache().unwrap();
+        general.update_cache().await.unwrap();
 
         let exchange_info = general.exchange_info().unwrap().0;
         mock_exchange_info.assert();
@@ -61,7 +62,7 @@ mod tests {
     }
 
     #[test]
-    fn get_symbol_info() {
+    async fn get_symbol_info() {
         let mock_exchange_info = mock("GET", "/api/v3/exchangeInfo")
             .with_header("content-type", "application/json;charset=UTF-8")
             .with_body_from_file("tests/mocks/general/exchange_info.json")
@@ -69,7 +70,7 @@ mod tests {
 
         let config = Config::default().set_rest_api_endpoint(mockito::server_url());
         let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
-        general.update_cache().unwrap();
+        general.update_cache().await.unwrap();
 
         let symbol = general.get_symbol_info("BNBBTC").unwrap();
         mock_exchange_info.assert();
