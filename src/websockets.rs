@@ -1,14 +1,16 @@
-use std::net::TcpStream;
-
 use error_chain::bail;
+use futures_util::stream::SplitSink;
+use futures_util::stream::SplitStream;
+use futures_util::SinkExt;
+use futures_util::StreamExt;
 use serde::Deserialize;
 use serde::Serialize;
+use tokio::net::TcpStream;
+use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::MaybeTlsStream;
+use tokio_tungstenite::WebSocketStream;
 use tracing::debug;
-use tungstenite::connect;
-use tungstenite::handshake::client::Response;
-use tungstenite::protocol::WebSocket;
-use tungstenite::stream::MaybeTlsStream;
-use tungstenite::Message;
+use tracing::info;
 use url::Url;
 
 use crate::config::Config;
@@ -61,7 +63,8 @@ pub enum WebsocketEvent {
 }
 
 pub struct WebSockets {
-    pub socket: Option<(WebSocket<MaybeTlsStream<TcpStream>>, Response)>,
+    pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+    pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -81,39 +84,42 @@ enum Events {
 }
 
 impl WebSockets {
-    pub fn new() -> WebSockets {
-        WebSockets { socket: None }
-    }
-
-    pub fn connect(&mut self, subscription: &str) -> Result<()> {
+    pub async fn connect(&mut self, subscription: &str) -> Result<Self> {
         self.connect_wss(&WebsocketAPI::Default.params(subscription))
+            .await
     }
 
-    pub fn connect_with_config(&mut self, subscription: &str, config: &Config) -> Result<()> {
+    pub async fn connect_with_config(
+        &mut self,
+        subscription: &str,
+        config: &Config,
+    ) -> Result<Self> {
         self.connect_wss(&WebsocketAPI::Custom(config.ws_endpoint.clone()).params(subscription))
+            .await
     }
 
-    pub fn connect_multiple_streams(&mut self, endpoints: &[String]) -> Result<()> {
+    pub async fn connect_multiple_streams(&mut self, endpoints: &[String]) -> Result<Self> {
         self.connect_wss(&WebsocketAPI::MultiStream.params(&endpoints.join("/")))
+            .await
     }
 
-    fn connect_wss(&mut self, wss: &str) -> Result<()> {
+    async fn connect_wss(&mut self, wss: &str) -> Result<Self> {
         let url = Url::parse(wss)?;
-        match connect(url) {
-            Ok(answer) => {
-                self.socket = Some(answer);
-                Ok(())
+        match tokio_tungstenite::connect_async(url).await {
+            Ok((socket, response)) => {
+                info!("Websocket handshake has been successfully completed");
+                info!("Response: {}", response.status());
+                info!("Response: {:?}", response.body());
+                let (write, read) = socket.split();
+                Ok(Self { write, read })
             }
             Err(e) => bail!(format!("Error during handshake {}", e)),
         }
     }
 
-    pub fn disconnect(&mut self) -> Result<()> {
-        if let Some(ref mut socket) = self.socket {
-            socket.0.close(None)?;
-            return Ok(());
-        }
-        bail!("Not able to close the connection");
+    pub async fn disconnect(&mut self) -> Result<()> {
+        self.write.send(Message::Close(None)).await?;
+        Ok(())
     }
 
     fn handle_msg(msg: &str) -> Result<WebsocketEvent> {
@@ -140,27 +146,23 @@ impl WebSockets {
         Ok(events)
     }
 
-    pub fn recv(&mut self) -> Result<Option<WebsocketEvent>> {
-        if let Some(ref mut socket) = self.socket {
-            let message = socket.0.read_message()?;
-            match message {
+    pub async fn recv(&mut self) -> Result<Option<WebsocketEvent>> {
+        match self.read.next().await {
+            Some(Ok(message)) => match message {
                 Message::Text(msg) => Ok(Some(Self::handle_msg(&msg)?)),
                 Message::Ping(_) => {
                     debug!("Ping received.");
-                    socket.0.write_message(Message::Pong(vec![]))?;
+                    self.write.send(Message::Pong(vec![])).await?;
                     Ok(None)
                 }
                 Message::Pong(_) | Message::Binary(_) | Message::Frame(_) => Ok(None),
                 Message::Close(e) => bail!(format!("Disconnected {:?}", e)),
+            },
+            Some(Err(e)) => Err(e.into()),
+            None => {
+                debug!("Websocket connection closed");
+                Err("Websocket connection closed".into())
             }
-        } else {
-            bail!("Websocket connection not initialized")
         }
-    }
-}
-
-impl Default for WebSockets {
-    fn default() -> Self {
-        Self::new()
     }
 }
