@@ -10,7 +10,6 @@ use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::MaybeTlsStream;
 use tokio_tungstenite::WebSocketStream;
 use tracing::debug;
-use tracing::info;
 use url::Url;
 
 use crate::config::Config;
@@ -84,32 +83,26 @@ enum Events {
 }
 
 impl WebSockets {
-    pub async fn connect(&mut self, subscription: &str) -> Result<Self> {
-        self.connect_wss(&WebsocketAPI::Default.params(subscription))
+    pub async fn connect(subscription: &str) -> Result<Self> {
+        Self::connect_wss(&WebsocketAPI::Default.params(subscription)).await
+    }
+
+    pub async fn connect_with_config(subscription: &str, config: &Config) -> Result<Self> {
+        Self::connect_wss(&WebsocketAPI::Custom(config.ws_endpoint.clone()).params(subscription))
             .await
     }
 
-    pub async fn connect_with_config(
-        &mut self,
-        subscription: &str,
-        config: &Config,
-    ) -> Result<Self> {
-        self.connect_wss(&WebsocketAPI::Custom(config.ws_endpoint.clone()).params(subscription))
-            .await
+    pub async fn connect_multiple_streams(endpoints: &[String]) -> Result<Self> {
+        Self::connect_wss(&WebsocketAPI::MultiStream.params(&endpoints.join("/"))).await
     }
 
-    pub async fn connect_multiple_streams(&mut self, endpoints: &[String]) -> Result<Self> {
-        self.connect_wss(&WebsocketAPI::MultiStream.params(&endpoints.join("/")))
-            .await
-    }
-
-    async fn connect_wss(&mut self, wss: &str) -> Result<Self> {
+    async fn connect_wss(wss: &str) -> Result<Self> {
         let url = Url::parse(wss)?;
         match tokio_tungstenite::connect_async(url).await {
             Ok((socket, response)) => {
-                info!("Websocket handshake has been successfully completed");
-                info!("Response: {}", response.status());
-                info!("Response: {:?}", response.body());
+                debug!("Websocket handshake has been successfully completed");
+                debug!("Response: {}", response.status());
+                debug!("Response: {:?}", response.body());
                 let (write, read) = socket.split();
                 Ok(Self { write, read })
             }
