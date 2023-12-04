@@ -143,9 +143,9 @@ impl WebSockets {
         match self.read.next().await {
             Some(Ok(message)) => match message {
                 Message::Text(msg) => Ok(Some(Self::handle_msg(&msg)?)),
-                Message::Ping(_) => {
+                Message::Ping(payload) => {
                     debug!("Ping received.");
-                    self.write.send(Message::Pong(vec![])).await?;
+                    self.write.send(Message::Pong(payload)).await?;
                     Ok(None)
                 }
                 Message::Pong(_) | Message::Binary(_) | Message::Frame(_) => Ok(None),
