@@ -1,5 +1,6 @@
 use std::convert::TryFrom;
 
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::from_value;
@@ -263,24 +264,24 @@ pub struct OrderBook {
 
 #[derive(PartialEq, Debug, Serialize, Deserialize, Clone)]
 pub struct Bids {
-    #[serde(with = "string_or_float")]
-    pub price: f64,
-    #[serde(with = "string_or_float")]
-    pub qty: f64,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub price: Decimal,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub qty: Decimal,
 }
 
 impl Bids {
-    pub fn new(price: f64, qty: f64) -> Bids {
+    pub fn new(price: Decimal, qty: Decimal) -> Bids {
         Bids { price, qty }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Asks {
-    #[serde(with = "string_or_float")]
-    pub price: f64,
-    #[serde(with = "string_or_float")]
-    pub qty: f64,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub price: Decimal,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub qty: Decimal,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -603,10 +604,12 @@ pub struct AggrTradesEvent {
     pub aggregated_trade_id: u64,
 
     #[serde(rename = "p")]
-    pub price: String,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub price: Decimal,
 
     #[serde(rename = "q")]
-    pub qty: String,
+    #[serde(with = "rust_decimal::serde::str")]
+    pub qty: Decimal,
 
     #[serde(rename = "f")]
     pub first_break_trade_id: u64,
