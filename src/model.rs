@@ -1362,8 +1362,8 @@ pub(crate) mod string_or_float_opt {
         #[derive(Deserialize)]
         #[serde(untagged)]
         enum StringOrFloat {
-            String(String),
-            Float(f64),
+            String,
+            Float,
         }
 
         Ok(Some(crate::model::string_or_float::deserialize(
