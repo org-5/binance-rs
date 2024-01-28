@@ -50,11 +50,6 @@ impl Client {
             .send()
             .await?;
 
-        if response.headers().contains_key("x-mbx-used-weight-1m") {
-            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
-            debug!("Used weights: {}", used_weights.to_str().unwrap());
-        }
-
         self.handler(response).await
     }
 
@@ -66,11 +61,6 @@ impl Client {
             .headers(self.build_headers(true)?)
             .send()
             .await?;
-
-        if response.headers().contains_key("x-mbx-used-weight-1m") {
-            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
-            debug!("Used weights: {}", used_weights.to_str().unwrap());
-        }
 
         self.bytes_handler(response).await
     }
@@ -87,11 +77,6 @@ impl Client {
             .headers(self.build_headers(true)?)
             .send()
             .await?;
-
-        if response.headers().contains_key("x-mbx-used-weight-1m") {
-            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
-            debug!("Used weights: {}", used_weights.to_str().unwrap());
-        }
 
         self.handler(response).await
     }
@@ -126,11 +111,6 @@ impl Client {
 
         let client = &self.inner_client;
         let response = client.get(url.as_str()).send().await?;
-
-        if response.headers().contains_key("x-mbx-used-weight-1m") {
-            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
-            debug!("Used weights: {}", used_weights.to_str().unwrap());
-        }
 
         self.handler(response).await
     }
@@ -220,6 +200,15 @@ impl Client {
     }
 
     async fn bytes_handler(&self, response: Response) -> Result<Bytes> {
+        if response.headers().contains_key("x-mbx-used-weight-1m") {
+            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
+            debug!("Used weights: {}", used_weights.to_str().unwrap());
+        }
+
+        if response.status() == StatusCode::TOO_MANY_REQUESTS {
+            panic!("Too many requests");
+        }
+
         match response.status() {
             StatusCode::OK => Ok(response.bytes().await?),
             StatusCode::INTERNAL_SERVER_ERROR => {
@@ -243,6 +232,15 @@ impl Client {
     }
 
     async fn handler<T: DeserializeOwned>(&self, response: Response) -> Result<T> {
+        if response.headers().contains_key("x-mbx-used-weight-1m") {
+            let used_weights = response.headers().get("x-mbx-used-weight-1m").unwrap();
+            debug!("Used weights: {}", used_weights.to_str().unwrap());
+        }
+
+        if response.status() == StatusCode::TOO_MANY_REQUESTS {
+            panic!("Too many requests");
+        }
+
         match response.status() {
             StatusCode::OK => Ok(response.json::<T>().await?),
             StatusCode::INTERNAL_SERVER_ERROR => {
