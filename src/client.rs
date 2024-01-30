@@ -209,6 +209,10 @@ impl Client {
             panic!("Too many requests");
         }
 
+        if response.status() == StatusCode::IM_A_TEAPOT {
+            panic!("We were told we are a teapot");
+        }
+
         match response.status() {
             StatusCode::OK => Ok(response.bytes().await?),
             StatusCode::INTERNAL_SERVER_ERROR => {
