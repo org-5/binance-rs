@@ -53,6 +53,21 @@ pub struct Symbol {
     pub filters: Vec<Filters>,
 }
 
+pub trait SymbolInfo {
+    fn ticker(&self) -> &str;
+    fn status(&self) -> &str;
+}
+
+impl SymbolInfo for Symbol {
+    fn ticker(&self) -> &str {
+        &self.symbol
+    }
+
+    fn status(&self) -> &str {
+        &self.status
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "filterType")]
 pub enum Filters {

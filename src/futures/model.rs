@@ -12,6 +12,7 @@ pub use crate::model::KlineSummaries;
 pub use crate::model::KlineSummary;
 pub use crate::model::RateLimit;
 pub use crate::model::ServerTime;
+use crate::model::SymbolInfo;
 pub use crate::model::SymbolPrice;
 pub use crate::model::Tickers;
 
@@ -42,6 +43,16 @@ pub struct Symbol {
     pub order_types: Vec<String>,
     pub time_in_force: Vec<String>,
     pub onboard_date: u128,
+}
+
+impl SymbolInfo for Symbol {
+    fn ticker(&self) -> &str {
+        &self.symbol
+    }
+
+    fn status(&self) -> &str {
+        &self.status
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
