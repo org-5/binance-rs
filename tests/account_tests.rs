@@ -6,7 +6,6 @@ use binance::model::*;
 #[cfg(test)]
 mod tests {
     use float_cmp::*;
-    use mockito::mock;
     use mockito::Matcher;
     use tokio::test;
 
@@ -14,7 +13,9 @@ mod tests {
 
     #[test]
     async fn get_account() {
-        let mock_get_account = mock("GET", "/api/v3/account")
+        let mut server = mockito::Server::new_async().await;
+        let mock_get_account = server
+            .mock("GET", "/api/v3/account")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "recvWindow=1234&timestamp=\\d+&signature=.*".into(),
@@ -23,7 +24,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -54,7 +55,9 @@ mod tests {
 
     #[test]
     async fn get_balance() {
-        let mock_get_account = mock("GET", "/api/v3/account")
+        let mut server = mockito::Server::new_async().await;
+        let mock_get_account = server
+            .mock("GET", "/api/v3/account")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "recvWindow=1234&timestamp=\\d+&signature=.*".into(),
@@ -63,7 +66,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -78,7 +81,9 @@ mod tests {
 
     #[test]
     async fn get_open_orders() {
-        let mock_open_orders = mock("GET", "/api/v3/openOrders")
+        let mut server = mockito::Server::new_async().await;
+        let mock_open_orders = server
+            .mock("GET", "/api/v3/openOrders")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "recvWindow=1234&symbol=LTCBTC&timestamp=\\d+".into(),
@@ -87,7 +92,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -120,14 +125,16 @@ mod tests {
 
     #[test]
     async fn get_all_open_orders() {
-        let mock_open_orders = mock("GET", "/api/v3/openOrders")
+        let mut server = mockito::Server::new_async().await;
+        let mock_open_orders = server
+            .mock("GET", "/api/v3/openOrders")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("recvWindow=1234&timestamp=\\d+".into()))
             .with_body_from_file("tests/mocks/account/get_open_orders.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -160,7 +167,9 @@ mod tests {
 
     #[test]
     async fn cancel_all_open_orders() {
-        let mock_cancel_all_open_orders = mock("DELETE", "/api/v3/openOrders")
+        let mut server = mockito::Server::new_async().await;
+        let mock_cancel_all_open_orders = server
+            .mock("DELETE", "/api/v3/openOrders")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "recvWindow=1234&symbol=BTCUSDT&timestamp=\\d+".into(),
@@ -169,7 +178,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -206,7 +215,9 @@ mod tests {
 
     #[test]
     async fn order_status() {
-        let mock_order_status = mock("GET", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_order_status = server
+            .mock("GET", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "orderId=1&recvWindow=1234&symbol=LTCBTC&timestamp=\\d+".into(),
@@ -215,7 +226,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -245,7 +256,9 @@ mod tests {
 
     #[test]
     async fn test_order_status() {
-        let mock_test_order_status = mock("GET", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_order_status = server
+            .mock("GET", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "orderId=1&recvWindow=1234&symbol=LTCBTC&timestamp=\\d+".into(),
@@ -254,7 +267,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -265,14 +278,15 @@ mod tests {
 
     #[test]
     async fn limit_buy() {
-        let mock_limit_buy = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_limit_buy =server.mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=BUY&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=LIMIT".into()))
             .with_body_from_file("tests/mocks/account/limit_buy.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -302,14 +316,15 @@ mod tests {
 
     #[test]
     async fn test_limit_buy() {
-        let mock_test_limit_buy = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_limit_buy =server.mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=BUY&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=LIMIT".into()))
             .with_body("{}")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -320,14 +335,15 @@ mod tests {
 
     #[test]
     async fn limit_sell() {
-        let mock_limit_sell = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_limit_sell =server.mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=SELL&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=LIMIT".into()))
             .with_body_from_file("tests/mocks/account/limit_sell.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -357,14 +373,15 @@ mod tests {
 
     #[test]
     async fn test_limit_sell() {
-        let mock_test_limit_sell = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_limit_sell =server.mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=SELL&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=LIMIT".into()))
             .with_body("{}")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -375,7 +392,9 @@ mod tests {
 
     #[test]
     async fn market_buy() {
-        let mock_market_buy = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_market_buy = server
+            .mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "quantity=1&recvWindow=1234&side=BUY&symbol=LTCBTC&timestamp=\\d+&type=MARKET"
@@ -385,7 +404,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -415,7 +434,9 @@ mod tests {
 
     #[test]
     async fn test_market_buy() {
-        let mock_test_market_buy = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_market_buy = server
+            .mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "quantity=1&recvWindow=1234&side=BUY&symbol=LTCBTC&timestamp=\\d+&type=MARKET"
@@ -425,7 +446,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -436,14 +457,15 @@ mod tests {
 
     #[test]
     async fn market_buy_using_quote_quantity() {
-        let mock_market_buy_using_quote_quantity = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_market_buy_using_quote_quantity =server.mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("quoteOrderQty=0.002&recvWindow=1234&side=BUY&symbol=BNBBTC&timestamp=\\d+&type=MARKET&signature=.*".into()))
             .with_body_from_file("tests/mocks/account/market_buy_using_quote_quantity.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -462,14 +484,15 @@ mod tests {
 
     #[test]
     async fn test_market_buy_using_quote_quantity() {
-        let mock_test_market_buy_using_quote_quantity = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_market_buy_using_quote_quantity =server.mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("quoteOrderQty=0.002&recvWindow=1234&side=BUY&symbol=BNBBTC&timestamp=\\d+&type=MARKET&signature=.*".into()))
             .with_body("{}")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -483,7 +506,9 @@ mod tests {
 
     #[test]
     async fn market_sell() {
-        let mock_market_sell = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_market_sell = server
+            .mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "quantity=1&recvWindow=1234&side=SELL&symbol=LTCBTC&timestamp=\\d+&type=MARKET"
@@ -493,7 +518,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -523,7 +548,9 @@ mod tests {
 
     #[test]
     async fn test_market_sell() {
-        let mock_test_market_sell = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_market_sell = server
+            .mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "quantity=1&recvWindow=1234&side=SELL&symbol=LTCBTC&timestamp=\\d+&type=MARKET"
@@ -533,7 +560,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -544,14 +571,15 @@ mod tests {
 
     #[test]
     async fn market_sell_using_quote_quantity() {
-        let mock_market_sell_using_quote_quantity = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_market_sell_using_quote_quantity =server.mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("quoteOrderQty=0.002&recvWindow=1234&side=SELL&symbol=BNBBTC&timestamp=\\d+&type=MARKET&signature=.*".into()))
             .with_body_from_file("tests/mocks/account/market_sell_using_quote_quantity.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -570,14 +598,15 @@ mod tests {
 
     #[test]
     async fn test_market_sell_using_quote_quantity() {
-        let mock_test_market_sell_using_quote_quantity = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_market_sell_using_quote_quantity =server.mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("quoteOrderQty=0.002&recvWindow=1234&side=SELL&symbol=BNBBTC&timestamp=\\d+&type=MARKET&signature=.*".into()))
             .with_body("{}")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -591,14 +620,15 @@ mod tests {
 
     #[test]
     async fn stop_limit_buy_order() {
-        let mock_stop_limit_buy_order = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_stop_limit_buy_order =server.mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=BUY&stopPrice=0.09&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=STOP_LOSS_LIMIT".into()))
             .with_body_from_file("tests/mocks/account/stop_limit_buy.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -632,14 +662,15 @@ mod tests {
 
     #[test]
     async fn test_stop_limit_buy_order() {
-        let mock_test_stop_limit_buy_order = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_stop_limit_buy_order =server.mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=BUY&stopPrice=0.09&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=STOP_LOSS_LIMIT".into()))
             .with_body("{}")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -653,14 +684,15 @@ mod tests {
 
     #[test]
     async fn stop_limit_sell_order() {
-        let mock_stop_limit_sell_order = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_stop_limit_sell_order =server.mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=SELL&stopPrice=0.09&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=STOP_LOSS_LIMIT".into()))
             .with_body_from_file("tests/mocks/account/stop_limit_sell.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -694,14 +726,15 @@ mod tests {
 
     #[test]
     async fn test_stop_limit_sell_order() {
-        let mock_test_stop_limit_sell_order = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_stop_limit_sell_order =server.mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=SELL&stopPrice=0.09&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=STOP_LOSS_LIMIT".into()))
             .with_body("{}")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -715,14 +748,15 @@ mod tests {
 
     #[test]
     async fn custom_order() {
-        let mock_custom_order = mock("POST", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_custom_order =server.mock("POST", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("newClientOrderId=6gCrw2kRUAF9CvJDGP16IP&price=0.1&quantity=1&recvWindow=1234&side=BUY&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=MARKET".into()))
             .with_body_from_file("tests/mocks/account/stop_limit_sell.json")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -765,14 +799,15 @@ mod tests {
 
     #[test]
     async fn test_custom_order() {
-        let mock_test_custom_order = mock("POST", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_custom_order =server.mock("POST", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex("price=0.1&quantity=1&recvWindow=1234&side=BUY&symbol=LTCBTC&timeInForce=GTC&timestamp=\\d+&type=MARKET".into()))
             .with_body("{}")
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -795,7 +830,9 @@ mod tests {
 
     #[test]
     async fn cancel_order() {
-        let mock_cancel_order = mock("DELETE", "/api/v3/order")
+        let mut server = mockito::Server::new_async().await;
+        let mock_cancel_order = server
+            .mock("DELETE", "/api/v3/order")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "orderId=1&recvWindow=1234&symbol=BTCUSDT&timestamp=\\d+".into(),
@@ -804,7 +841,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -820,7 +857,9 @@ mod tests {
 
     #[test]
     async fn test_cancel_order() {
-        let mock_test_cancel_order = mock("DELETE", "/api/v3/order/test")
+        let mut server = mockito::Server::new_async().await;
+        let mock_test_cancel_order = server
+            .mock("DELETE", "/api/v3/order/test")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "orderId=1&recvWindow=1234&symbol=BTCUSDT&timestamp=\\d+".into(),
@@ -829,7 +868,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
@@ -840,7 +879,9 @@ mod tests {
 
     #[test]
     async fn trade_history() {
-        let mock_trade_history = mock("GET", "/api/v3/myTrades")
+        let mut server = mockito::Server::new_async().await;
+        let mock_trade_history = server
+            .mock("GET", "/api/v3/myTrades")
             .with_header("content-type", "application/json;charset=UTF-8")
             .match_query(Matcher::Regex(
                 "recvWindow=1234&symbol=BTCUSDT&timestamp=\\d+".into(),
@@ -849,7 +890,7 @@ mod tests {
             .create();
 
         let config = Config::default()
-            .set_rest_api_endpoint(mockito::server_url())
+            .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
         let account: Account = Binance::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
