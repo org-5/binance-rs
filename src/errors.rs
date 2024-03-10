@@ -11,6 +11,8 @@ error_chain! {
     errors {
         BinanceError(response: BinanceContentError)
 
+        TooManyRequest
+
         KlineValueMissingError(index: usize, name: &'static str) {
             description("invalid Vec for Kline"),
             display("{} at {} is missing", name, index),

@@ -206,9 +206,8 @@ impl Client {
         }
 
         if response.status() == StatusCode::TOO_MANY_REQUESTS {
-            panic!("Too many requests");
+            bail!(ErrorKind::TooManyRequest)
         }
-
         if response.status() == StatusCode::IM_A_TEAPOT {
             panic!("We were told we are a teapot");
         }
@@ -242,7 +241,10 @@ impl Client {
         }
 
         if response.status() == StatusCode::TOO_MANY_REQUESTS {
-            panic!("Too many requests");
+            bail!(ErrorKind::TooManyRequest)
+        }
+        if response.status() == StatusCode::IM_A_TEAPOT {
+            panic!("We were told we are a teapot");
         }
 
         match response.status() {
