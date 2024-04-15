@@ -3,20 +3,25 @@ use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 
 use error_chain::bail;
-use serde_json::Value;
 
 use crate::errors::Result;
 
+#[must_use]
 pub fn build_request(parameters: BTreeMap<String, String>) -> String {
     let mut request = String::new();
     for (key, value) in parameters {
-        let param = format!("{}={}&", key, value);
+        let param = format!("{key}={value}&");
         request.push_str(param.as_ref());
     }
     request.pop();
     request
 }
 
+/// Build a signed request
+///
+/// # Errors
+///
+/// Returns an error if the timestamp cannot be generated.
 pub fn build_signed_request(
     parameters: BTreeMap<String, String>,
     recv_window: u64,
@@ -24,6 +29,11 @@ pub fn build_signed_request(
     build_signed_request_custom(parameters, recv_window, SystemTime::now())
 }
 
+/// Build a signed request with a custom start time
+///
+/// # Errors
+///
+/// Returns an error if the timestamp cannot be generated.
 pub fn build_signed_request_custom(
     mut parameters: BTreeMap<String, String>,
     recv_window: u64,
@@ -37,14 +47,6 @@ pub fn build_signed_request_custom(
         return Ok(build_request(parameters));
     }
     bail!("Failed to get timestamp")
-}
-
-pub fn to_i64(v: &Value) -> i64 {
-    v.as_i64().unwrap()
-}
-
-pub fn to_f64(v: &Value) -> f64 {
-    v.as_str().unwrap().parse().unwrap()
 }
 
 fn get_timestamp(start: SystemTime) -> Result<u64> {

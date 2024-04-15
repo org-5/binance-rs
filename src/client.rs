@@ -24,7 +24,7 @@ pub struct Client {
     api_key: String,
     secret_key: String,
     host: String,
-    inner_client: reqwest::Client,
+    inner: reqwest::Client,
 }
 
 impl Client {
@@ -33,7 +33,7 @@ impl Client {
             api_key: api_key.unwrap_or_default(),
             secret_key: secret_key.unwrap_or_default(),
             host,
-            inner_client: reqwest::Client::builder().pool_idle_timeout(None).build()?,
+            inner: reqwest::Client::builder().pool_idle_timeout(None).build()?,
         })
     }
 
@@ -43,7 +43,7 @@ impl Client {
         request: Option<String>,
     ) -> Result<T> {
         let url = self.sign_request(endpoint, request);
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client
             .get(url.as_str())
             .headers(self.build_headers(true)?)
@@ -55,7 +55,7 @@ impl Client {
 
     pub async fn get_signed_bytes(&self, endpoint: API, request: Option<String>) -> Result<Bytes> {
         let url = self.sign_request(endpoint, request);
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client
             .get(url.as_str())
             .headers(self.build_headers(true)?)
@@ -71,7 +71,7 @@ impl Client {
         request: String,
     ) -> Result<T> {
         let url = self.sign_request(endpoint, Some(request));
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client
             .post(url.as_str())
             .headers(self.build_headers(true)?)
@@ -87,7 +87,7 @@ impl Client {
         request: Option<String>,
     ) -> Result<T> {
         let url = self.sign_request(endpoint, request);
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client
             .delete(url.as_str())
             .headers(self.build_headers(true)?)
@@ -105,11 +105,11 @@ impl Client {
         let mut url: String = format!("{}{}", self.host, String::from(endpoint));
         if let Some(request) = request {
             if !request.is_empty() {
-                url.push_str(format!("?{}", request).as_str());
+                url.push_str(format!("?{request}").as_str());
             }
         }
 
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client.get(url.as_str()).send().await?;
 
         self.handler(response).await
@@ -118,7 +118,7 @@ impl Client {
     pub async fn post<T: DeserializeOwned>(&self, endpoint: API) -> Result<T> {
         let url: String = format!("{}{}", self.host, String::from(endpoint));
 
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client
             .post(url.as_str())
             .headers(self.build_headers(false)?)
@@ -130,9 +130,9 @@ impl Client {
 
     pub async fn put<T: DeserializeOwned>(&self, endpoint: API, listen_key: &str) -> Result<T> {
         let url: String = format!("{}{}", self.host, String::from(endpoint));
-        let data: String = format!("listenKey={}", listen_key);
+        let data: String = format!("listenKey={listen_key}");
 
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client
             .put(url.as_str())
             .headers(self.build_headers(false)?)
@@ -145,9 +145,9 @@ impl Client {
 
     pub async fn delete<T: DeserializeOwned>(&self, endpoint: API, listen_key: &str) -> Result<T> {
         let url: String = format!("{}{}", self.host, String::from(endpoint));
-        let data: String = format!("listenKey={}", listen_key);
+        let data: String = format!("listenKey={listen_key}");
 
-        let client = &self.inner_client;
+        let client = &self.inner;
         let response = client
             .delete(url.as_str())
             .headers(self.build_headers(false)?)
@@ -171,12 +171,12 @@ impl Client {
                 Hmac::<Sha256>::new_from_slice(self.secret_key.as_bytes()).unwrap();
             signed_key.update(request.as_bytes());
             let signature = hex_encode(signed_key.finalize().into_bytes());
-            let request_body: String = format!("{}&signature={}", request, signature);
+            let request_body: String = format!("{request}&signature={signature}");
             format!("{}{}?{}", host, String::from(endpoint), request_body)
         } else {
             let signed_key = Hmac::<Sha256>::new_from_slice(self.secret_key.as_bytes()).unwrap();
             let signature = hex_encode(signed_key.finalize().into_bytes());
-            let request_body: String = format!("&signature={}", signature);
+            let request_body: String = format!("&signature={signature}");
             format!("{}{}?{}", host, String::from(endpoint), request_body)
         }
     }
@@ -208,9 +208,10 @@ impl Client {
         if response.status() == StatusCode::TOO_MANY_REQUESTS {
             bail!(ErrorKind::TooManyRequest)
         }
-        if response.status() == StatusCode::IM_A_TEAPOT {
-            panic!("We were told we are a teapot");
-        }
+        assert!(
+            response.status() != StatusCode::IM_A_TEAPOT,
+            "We were told we are a teapot"
+        );
 
         match response.status() {
             StatusCode::OK => Ok(response.bytes().await?),
@@ -243,9 +244,10 @@ impl Client {
         if response.status() == StatusCode::TOO_MANY_REQUESTS {
             bail!(ErrorKind::TooManyRequest)
         }
-        if response.status() == StatusCode::IM_A_TEAPOT {
-            panic!("We were told we are a teapot");
-        }
+        assert!(
+            response.status() != StatusCode::IM_A_TEAPOT,
+            "We were told we are a teapot"
+        );
 
         match response.status() {
             StatusCode::OK => Ok(response.json::<T>().await?),

@@ -54,7 +54,7 @@ use binance::model::*;
 use binance::market::*;
 
 fn main() {
-    let market: Market = Binance::new(None, None);
+    let market =  Market::new(None, None);
 
     // Order book at default depth
     match market.get_depth("BNBETH") {
@@ -132,13 +132,13 @@ fn main() {
 
 ```rust
 use binance::api::*;
-use binance::account::*;
+use binance::spot::account::*;
 
 fn main() {
     let api_key = Some("YOUR_API_KEY".into());
     let secret_key = Some("YOUR_SECRET_KEY".into());
 
-    let account: Account = Binance::new(api_key, secret_key);
+    let account =  Account::new(api_key, secret_key);
 
     match account.get_account() {
         Ok(answer) => println!("{:?}", answer.balances),
@@ -259,7 +259,7 @@ use binance::userstream::*;
 
 fn main() {
     let api_key_user = Some("YOUR_API_KEY".into());
-    let user_stream: UserStream = Binance::new(api_key_user.clone(), None);
+    let user_stream =  UserStream::new(api_key_user.clone(), None);
 
     if let Ok(answer) = user_stream.start() {
         println!("Data Stream Started ...");
@@ -291,7 +291,7 @@ use std::sync::atomic::{AtomicBool};
 fn main() {
     let api_key_user = Some("YOUR_KEY".into());
     let keep_running = AtomicBool::new(true); // Used to control the event loop
-    let user_stream: UserStream = Binance::new(api_key_user, None);
+    let user_stream =  UserStream::new(api_key_user, None);
 
     if let Ok(answer) = user_stream.start() {
 	let listen_key = answer.listen_key;

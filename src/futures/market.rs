@@ -1,47 +1,26 @@
-/*!
-## Implemented functionality
-- [x] `Order Book`
-- [x] `Recent Trades List`
-- [ ] `Old Trades Lookup (MARKET_DATA)`
-- [x] `Compressed/Aggregate Trades List`
-- [x] `Kline/Candlestick Data`
-- [x] `Mark Price`
-- [ ] `Get Funding Rate History (MARKET_DATA)`
-- [x] `24hr Ticker Price Change Statistics`
-- [x] `Symbol Price Ticker`
-- [x] `Symbol Order Book Ticker`
-- [x] `Get all Liquidation Orders`
-- [x] `Open Interest`
-- [ ] `Notional and Leverage Brackets (MARKET_DATA)`
-- [ ] `Open Interest Statistics (MARKET_DATA)`
-- [ ] `Top Trader Long/Short Ratio (Accounts) (MARKET_DATA)`
-- [ ] `Top Trader Long/Short Ratio (Positions) (MARKET_DATA)`
-- [ ] `Long/Short Ratio (MARKET_DATA)`
-- [ ] `Taker Buy/Sell Volume (MARKET_DATA)`
-*/
-
 use std::collections::BTreeMap;
-use std::convert::TryInto;
 
 use serde_json::Value;
 
 use crate::api::Futures;
 use crate::api::API;
 use crate::client::Client;
+use crate::config::Config;
 use crate::errors::Result;
 use crate::futures::model::AggTrades;
-use crate::futures::model::BookTickers;
-use crate::futures::model::KlineSummaries;
-use crate::futures::model::KlineSummary;
 use crate::futures::model::LiquidationOrders;
 use crate::futures::model::MarkPrices;
 use crate::futures::model::OpenInterest;
 use crate::futures::model::OpenInterestHist;
 use crate::futures::model::OrderBook;
 use crate::futures::model::PriceStats;
-use crate::futures::model::SymbolPrice;
-use crate::futures::model::Tickers;
 use crate::futures::model::Trades;
+use crate::model::BookTickers;
+use crate::model::KlineSummaries;
+use crate::model::KlineSummary;
+use crate::model::SymbolPrice;
+use crate::model::Tickers;
+use crate::spot::model::Prices;
 use crate::util::build_request;
 use crate::util::build_signed_request;
 
@@ -51,13 +30,46 @@ use crate::util::build_signed_request;
 // Implement all functions
 
 #[derive(Clone, Debug)]
-pub struct FuturesMarket {
+pub struct Market {
     pub client: Client,
     pub recv_window: u64,
 }
 
-impl FuturesMarket {
-    // Order book (Default 100; max 1000)
+impl Market {
+    /// Creates a new Market instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Client fails to be created.
+    pub fn new(api_key: Option<String>, secret_key: Option<String>) -> Result<Self> {
+        Self::new_with_config(api_key, secret_key, &Config::default())
+    }
+
+    /// Creates a new Market instance with a Config.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Client fails to be created.
+    pub fn new_with_config(
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
+    ) -> Result<Self> {
+        Ok(Self {
+            client: Client::new(
+                api_key,
+                secret_key,
+                config.futures_rest_api_endpoint.clone(),
+            )?,
+            recv_window: config.recv_window,
+        })
+    }
+
+    /// Order book (Default 100; max 1000)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_depth<S>(&self, symbol: S) -> Result<OrderBook>
     where
         S: Into<String>,
@@ -72,8 +84,12 @@ impl FuturesMarket {
             .await
     }
 
-    // Order book at a custom depth. Currently supported values
-    // are 5, 10, 20, 50, 100, 500, 1000
+    /// Order book at a custom depth. Currently supported values
+    /// are 5, 10, 20, 50, 100, 500, 1000
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_custom_depth<S>(&self, symbol: S, depth: u64) -> Result<OrderBook>
     where
         S: Into<String>,
@@ -87,6 +103,11 @@ impl FuturesMarket {
             .await
     }
 
+    /// Recent trades list
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_trades<S>(&self, symbol: S) -> Result<Trades>
     where
         S: Into<String>,
@@ -99,7 +120,11 @@ impl FuturesMarket {
             .await
     }
 
-    // TODO This may be incomplete, as it hasn't been tested
+    /// Old trade lookup
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_historical_trades<S1, S2, S3>(
         &self,
         symbol: S1,
@@ -117,10 +142,10 @@ impl FuturesMarket {
 
         // Add three optional parameters
         if let Some(lt) = limit.into() {
-            parameters.insert("limit".into(), format!("{}", lt));
+            parameters.insert("limit".into(), format!("{lt}"));
         }
         if let Some(fi) = from_id.into() {
-            parameters.insert("fromId".into(), format!("{}", fi));
+            parameters.insert("fromId".into(), format!("{fi}"));
         }
 
         let request = build_signed_request(parameters, self.recv_window)?;
@@ -130,6 +155,11 @@ impl FuturesMarket {
             .await
     }
 
+    /// Compressed/Aggregate trades list
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_agg_trades<S1, S2, S3, S4, S5>(
         &self,
         symbol: S1,
@@ -151,16 +181,16 @@ impl FuturesMarket {
 
         // Add three optional parameters
         if let Some(lt) = limit.into() {
-            parameters.insert("limit".into(), format!("{}", lt));
+            parameters.insert("limit".into(), format!("{lt}"));
         }
         if let Some(st) = start_time.into() {
-            parameters.insert("startTime".into(), format!("{}", st));
+            parameters.insert("startTime".into(), format!("{st}"));
         }
         if let Some(et) = end_time.into() {
-            parameters.insert("endTime".into(), format!("{}", et));
+            parameters.insert("endTime".into(), format!("{et}"));
         }
         if let Some(fi) = from_id.into() {
-            parameters.insert("fromId".into(), format!("{}", fi));
+            parameters.insert("fromId".into(), format!("{fi}"));
         }
 
         let request = build_request(parameters);
@@ -170,8 +200,12 @@ impl FuturesMarket {
             .await
     }
 
-    // Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
-    // https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data
+    /// Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
+    /// [doc](https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_klines<S1, S2, S3, S4, S5>(
         &self,
         symbol: S1,
@@ -194,13 +228,13 @@ impl FuturesMarket {
 
         // Add three optional parameters
         if let Some(lt) = limit.into() {
-            parameters.insert("limit".into(), format!("{}", lt));
+            parameters.insert("limit".into(), format!("{lt}"));
         }
         if let Some(st) = start_time.into() {
-            parameters.insert("startTime".into(), format!("{}", st));
+            parameters.insert("startTime".into(), format!("{st}"));
         }
         if let Some(et) = end_time.into() {
-            parameters.insert("endTime".into(), format!("{}", et));
+            parameters.insert("endTime".into(), format!("{et}"));
         }
 
         let request = build_request(parameters);
@@ -212,14 +246,18 @@ impl FuturesMarket {
 
         let klines = KlineSummaries::AllKlineSummaries(
             data.iter()
-                .map(|row| row.try_into())
+                .map(std::convert::TryInto::try_into)
                 .collect::<Result<Vec<KlineSummary>>>()?,
         );
 
         Ok(klines)
     }
 
-    // 24hr ticker price change statistics
+    /// 24hr ticker price change statistics
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_24h_price_stats<S>(&self, symbol: S) -> Result<PriceStats>
     where
         S: Into<String>,
@@ -234,14 +272,22 @@ impl FuturesMarket {
             .await
     }
 
-    // 24hr ticker price change statistics for all symbols
+    /// 24hr ticker price change statistics for all symbols
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_all_24h_price_stats(&self) -> Result<Vec<PriceStats>> {
         self.client
             .get(API::Futures(Futures::Ticker24hr), None)
             .await
     }
 
-    // Latest price for ONE symbol.
+    /// Latest price for ONE symbol.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_price<S>(&self, symbol: S) -> Result<SymbolPrice>
     where
         S: Into<String>,
@@ -256,22 +302,34 @@ impl FuturesMarket {
             .await
     }
 
-    // Latest price for all symbols.
-    pub async fn get_all_prices(&self) -> Result<crate::model::Prices> {
+    /// Latest price for all symbols.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
+    pub async fn get_all_prices(&self) -> Result<Prices> {
         self.client
             .get(API::Futures(Futures::TickerPrice), None)
             .await
     }
 
-    // Symbols order book ticker
-    // -> Best price/qty on the order book for ALL symbols.
+    /// Symbols order book ticker
+    /// -> Best price/qty on the order book for ALL symbols.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_all_book_tickers(&self) -> Result<BookTickers> {
         self.client
             .get(API::Futures(Futures::BookTicker), None)
             .await
     }
 
-    // -> Best price/qty on the order book for ONE symbol
+    /// Best price/qty on the order book for ONE symbol
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_book_ticker<S>(&self, symbol: S) -> Result<Tickers>
     where
         S: Into<String>,
@@ -284,18 +342,33 @@ impl FuturesMarket {
             .await
     }
 
+    /// Mark price and funding rate
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_mark_prices(&self) -> Result<MarkPrices> {
         self.client
             .get(API::Futures(Futures::PremiumIndex), None)
             .await
     }
 
+    /// Get all liquidation orders
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_all_liquidation_orders(&self) -> Result<LiquidationOrders> {
         self.client
             .get(API::Futures(Futures::AllForceOrders), None)
             .await
     }
 
+    /// Get open interest
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn open_interest<S>(&self, symbol: S) -> Result<OpenInterest>
     where
         S: Into<String>,
@@ -308,6 +381,11 @@ impl FuturesMarket {
             .await
     }
 
+    /// Get open interest statistics
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn open_interest_statistics<S1, S2, S3, S4, S5>(
         &self,
         symbol: S1,
@@ -328,13 +406,13 @@ impl FuturesMarket {
         parameters.insert("period".into(), period.into());
 
         if let Some(lt) = limit.into() {
-            parameters.insert("limit".into(), format!("{}", lt));
+            parameters.insert("limit".into(), format!("{lt}"));
         }
         if let Some(st) = start_time.into() {
-            parameters.insert("startTime".into(), format!("{}", st));
+            parameters.insert("startTime".into(), format!("{st}"));
         }
         if let Some(et) = end_time.into() {
-            parameters.insert("endTime".into(), format!("{}", et));
+            parameters.insert("endTime".into(), format!("{et}"));
         }
 
         let request = build_request(parameters);

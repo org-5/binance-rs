@@ -12,6 +12,8 @@ use tokio_tungstenite::WebSocketStream;
 use tracing::debug;
 use url::Url;
 
+use super::model::OrderBook;
+use super::model::OrderTradeEvent;
 use crate::config::Config;
 use crate::errors::Result;
 use crate::model::AccountUpdateEvent;
@@ -21,8 +23,6 @@ use crate::model::BookTickerEvent;
 use crate::model::DayTickerEvent;
 use crate::model::DepthOrderBookEvent;
 use crate::model::KlineEvent;
-use crate::model::OrderBook;
-use crate::model::OrderTradeEvent;
 use crate::model::TradeEvent;
 
 #[allow(clippy::all)]
@@ -35,12 +35,11 @@ enum WebsocketAPI {
 impl WebsocketAPI {
     fn params(self, subscription: &str) -> String {
         match self {
-            WebsocketAPI::Default => format!("wss://stream.binance.com:9443/ws/{}", subscription),
-            WebsocketAPI::MultiStream => format!(
-                "wss://stream.binance.com:9443/stream?streams={}",
-                subscription
-            ),
-            WebsocketAPI::Custom(url) => format!("{}/{}", url, subscription),
+            WebsocketAPI::Default => format!("wss://stream.binance.com:9443/ws/{subscription}"),
+            WebsocketAPI::MultiStream => {
+                format!("wss://stream.binance.com:9443/stream?streams={subscription}")
+            }
+            WebsocketAPI::Custom(url) => format!("{url}/{subscription}"),
         }
     }
 }
@@ -83,19 +82,39 @@ enum Events {
 }
 
 impl WebSockets {
+    /// Connect to the Binance websocket
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection cannot be established.
     pub async fn connect(subscription: &str) -> Result<Self> {
         Self::connect_wss(&WebsocketAPI::Default.params(subscription)).await
     }
 
+    /// Connect to the Binance websocket with a configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection cannot be established.
     pub async fn connect_with_config(subscription: &str, config: &Config) -> Result<Self> {
         Self::connect_wss(&WebsocketAPI::Custom(config.ws_endpoint.clone()).params(subscription))
             .await
     }
 
+    /// Connect to the Binance websocket with multiple streams
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection cannot be established.
     pub async fn connect_multiple_streams(endpoints: &[String]) -> Result<Self> {
         Self::connect_wss(&WebsocketAPI::MultiStream.params(&endpoints.join("/"))).await
     }
 
+    /// Connect to the Binance websocket with multiple streams and a configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection cannot be established.
     async fn connect_wss(wss: &str) -> Result<Self> {
         let url = Url::parse(wss)?;
         match tokio_tungstenite::connect_async(url).await {
@@ -104,12 +123,17 @@ impl WebSockets {
                 debug!("Response: {}", response.status());
                 debug!("Response: {:?}", response.body());
                 let (write, read) = socket.split();
-                Ok(Self { write, read })
+                Ok(Self { read, write })
             }
             Err(e) => bail!(format!("Error during handshake {}", e)),
         }
     }
 
+    /// Disconnect from the websocket
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection cannot be closed.
     pub async fn disconnect(&mut self) -> Result<()> {
         self.write.send(Message::Close(None)).await?;
         Ok(())
@@ -139,6 +163,11 @@ impl WebSockets {
         Ok(events)
     }
 
+    /// Receive a message from the websocket
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the message cannot be received.
     pub async fn recv(&mut self) -> Result<Option<WebsocketEvent>> {
         match self.read.next().await {
             Some(Ok(message)) => match message {

@@ -1,6 +1,5 @@
-use binance::api::*;
 use binance::config::*;
-use binance::futures::market::FuturesMarket;
+use binance::futures::market::Market;
 use binance::futures::model::OpenInterestHist;
 
 #[cfg(test)]
@@ -21,7 +20,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_futures_rest_api_endpoint(server.url());
-        let market: FuturesMarket = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let open_interest_hists = market
             .open_interest_statistics("BTCUSDT", "5m", 10, None, None)
@@ -34,13 +33,13 @@ mod tests {
                 symbol: "BTCUSDT".into(),
                 sum_open_interest: "20403.63700000".into(),
                 sum_open_interest_value: "150570784.07809979".into(),
-                timestamp: 1583127900000,
+                timestamp: 1_583_127_900_000,
             },
             OpenInterestHist {
                 symbol: "BTCUSDT".into(),
                 sum_open_interest: "20401.36700000".into(),
                 sum_open_interest_value: "149940752.14464448".into(),
-                timestamp: 1583128200000,
+                timestamp: 1_583_128_200_000,
             },
         ];
 

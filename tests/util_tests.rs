@@ -6,8 +6,6 @@ mod tests {
     use std::time::SystemTime;
     use std::time::UNIX_EPOCH;
 
-    use float_cmp::*;
-
     use super::*;
 
     #[test]
@@ -40,26 +38,7 @@ mod tests {
 
         assert_eq!(
             result,
-            format!("recvWindow={}&timestamp={}", recv_window, timestamp)
+            format!("recvWindow={recv_window}&timestamp={timestamp}")
         );
-    }
-
-    #[test]
-    fn to_i64() {
-        let value_max = serde_json::json!(i64::MAX);
-        let value_min = serde_json::json!(i64::MIN);
-        assert_eq!(binance::util::to_i64(&value_max), i64::MAX);
-        assert_eq!(binance::util::to_i64(&value_min), i64::MIN);
-    }
-
-    #[test]
-    fn to_f64() {
-        let value = serde_json::json!("123.3");
-        assert!(approx_eq!(
-            f64,
-            binance::util::to_f64(&value),
-            123.3,
-            ulps = 2
-        ));
     }
 }

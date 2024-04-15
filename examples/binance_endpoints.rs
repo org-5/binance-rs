@@ -1,11 +1,10 @@
-use binance::account::*;
-use binance::api::*;
-use binance::config::*;
+use binance::config::Config;
 use binance::errors::ErrorKind as BinanceLibErrorKind;
-use binance::general::*;
-use binance::market::*;
 use binance::model::KlineSummary;
-use binance::savings::*;
+use binance::savings::Savings;
+use binance::spot::account::Account;
+use binance::spot::general::General;
+use binance::spot::market::Market;
 
 #[tokio::main]
 async fn main() {
@@ -26,21 +25,21 @@ async fn main() {
 async fn general(use_testnet: bool) {
     let mut general: General = if use_testnet {
         let config = Config::default().set_rest_api_endpoint("https://testnet.binance.vision");
-        Binance::new_with_config(None, None, &config).unwrap()
+        General::new_with_config(None, None, &config).unwrap()
     } else {
-        Binance::new(None, None).unwrap()
+        General::new(None, None).unwrap()
     };
 
     let ping = general.ping().await;
     match ping {
-        Ok(answer) => println!("{:?}", answer),
+        Ok(answer) => println!("{answer:?}"),
         Err(err) => {
             match err.0 {
                 BinanceLibErrorKind::BinanceError(response) => match response.code {
                     -1000_i16 => println!("An unknown error occured while processing the request"),
                     _ => println!("Non-catched code {}: {}", response.code, response.msg),
                 },
-                BinanceLibErrorKind::Msg(msg) => println!("Binancelib error msg: {}", msg),
+                BinanceLibErrorKind::Msg(msg) => println!("Binancelib error msg: {msg}"),
                 _ => println!("Other errors: {}.", err.0),
             };
         }
@@ -49,19 +48,19 @@ async fn general(use_testnet: bool) {
     let result = general.get_server_time();
     match result {
         Ok(answer) => println!("Server Time: {}", answer.server_time),
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 
     let result = general.exchange_info();
     match result {
-        Ok(answer) => println!("Exchange information: {:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("Exchange information: {answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     let result = general.get_symbol_info("ethbtc");
     match result {
-        Ok(answer) => println!("Symbol information: {:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("Symbol information: {answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 }
 
@@ -70,67 +69,67 @@ async fn account() {
     let api_key = Some("YOUR_API_KEY".into());
     let secret_key = Some("YOUR_SECRET_KEY".into());
 
-    let account: Account = Binance::new(api_key, secret_key).unwrap();
+    let account = Account::new(api_key, secret_key).unwrap();
 
     match account.get_account().await {
         Ok(answer) => println!("{:?}", answer.balances),
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.get_open_orders("WTCETH").await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
-    match account.limit_buy("WTCETH", 10, 0.014000).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+    match account.limit_buy("WTCETH", 10, 0.014_000).await {
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.market_buy("WTCETH", 5).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.market_buy_using_quote_quantity("WTCETH", 5).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
-    match account.limit_sell("WTCETH", 10, 0.035000).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+    match account.limit_sell("WTCETH", 10, 0.035_000).await {
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.market_sell("WTCETH", 5).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.market_sell_using_quote_quantity("WTCETH", 5).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     let order_id = 1_957_528;
     match account.order_status("WTCETH", order_id).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.cancel_order("WTCETH", order_id).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.get_balance("KNC").await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match account.trade_history("WTCETH").await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 }
 
@@ -139,61 +138,61 @@ async fn savings() {
     let api_key = Some("YOUR_API_KEY".into());
     let api_secret = Some("YOUR_SECRET_KEY".into());
 
-    let savings: Savings = Binance::new(api_key, api_secret).unwrap();
+    let savings = Savings::new(api_key, api_secret).unwrap();
 
     match savings.get_all_coins().await {
-        Ok(answer) => println!("{:#?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:#?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match savings.asset_detail(None).await {
-        Ok(answer) => println!("{:#?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:#?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     match savings.deposit_address("BTC", None).await {
-        Ok(answer) => println!("{:#?}", answer),
-        Err(e) => println!("Error: {:?}", e),
+        Ok(answer) => println!("{answer:#?}"),
+        Err(e) => println!("Error: {e:?}"),
     }
 }
 
 #[allow(dead_code)]
 async fn market_data() {
-    let market: Market = Binance::new(None, None).unwrap();
+    let market = Market::new(None, None).unwrap();
 
     // Order book at default depth
     match market.get_depth("BNBETH").await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
     // Order book at depth 500
     match market.get_custom_depth("BNBETH", 500).await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     // Latest price for ALL symbols
     match market.get_all_prices().await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     // Latest price for ONE symbol
     match market.get_price("KNCETH").await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     // Current average price for ONE symbol
     match market.get_average_price("KNCETH").await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     // Best price/qty on the order book for ALL symbols
     match market.get_all_book_tickers().await {
-        Ok(answer) => println!("{:?}", answer),
-        Err(e) => println!("Error: {}", e),
+        Ok(answer) => println!("{answer:?}"),
+        Err(e) => println!("Error: {e}"),
     }
 
     // Best price/qty on the order book for ONE symbol
@@ -202,7 +201,7 @@ async fn market_data() {
             "Bid Price: {}, Ask Price: {}",
             answer.bid_price, answer.ask_price
         ),
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 
     // 24hr ticker price change statistics
@@ -211,7 +210,7 @@ async fn market_data() {
             "Open Price: {}, Higher Price: {}, Lower Price: {:?}",
             answer.open_price, answer.high_price, answer.low_price
         ),
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 
     // 10 latest (aggregated) trades
@@ -228,7 +227,7 @@ async fn market_data() {
                 trade.price
             );
         }
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 
     // last 10 5min klines (candlesticks) for a symbol:
@@ -244,6 +243,6 @@ async fn market_data() {
                 }
             }
         }
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 }

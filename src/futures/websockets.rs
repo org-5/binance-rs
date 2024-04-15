@@ -12,6 +12,7 @@ use tokio_tungstenite::WebSocketStream;
 use tracing::debug;
 use url::Url;
 
+use super::model::OrderBook;
 use crate::config::Config;
 use crate::errors::Result;
 use crate::futures::model;
@@ -27,11 +28,10 @@ use crate::model::KlineEvent;
 use crate::model::LiquidationEvent;
 use crate::model::MarkPriceEvent;
 use crate::model::MiniTickerEvent;
-use crate::model::OrderBook;
 use crate::model::TradeEvent;
 use crate::model::UserDataStreamExpiredEvent;
-#[allow(clippy::all)]
-enum FuturesWebsocketAPI {
+
+enum WebsocketsApi {
     Default,
     MultiStream,
     Custom(String),
@@ -43,7 +43,7 @@ pub enum FuturesMarket {
     Vanilla,
 }
 
-impl FuturesWebsocketAPI {
+impl WebsocketsApi {
     fn params(self, market: &FuturesMarket, subscription: &str) -> String {
         let baseurl = match market {
             FuturesMarket::USDM => "wss://fstream.binance.com",
@@ -52,20 +52,20 @@ impl FuturesWebsocketAPI {
         };
 
         match self {
-            FuturesWebsocketAPI::Default => {
-                format!("{}/ws/{}", baseurl, subscription)
+            WebsocketsApi::Default => {
+                format!("{baseurl}/ws/{subscription}")
             }
-            FuturesWebsocketAPI::MultiStream => {
-                format!("{}/stream?streams={}", baseurl, subscription)
+            WebsocketsApi::MultiStream => {
+                format!("{baseurl}/stream?streams={subscription}")
             }
-            FuturesWebsocketAPI::Custom(url) => url,
+            WebsocketsApi::Custom(url) => url,
         }
     }
 }
 
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum FuturesWebsocketEvent {
+pub enum WebsocketEvent {
     AccountUpdate(AccountUpdateEvent),
     OrderTrade(model::OrderTradeEvent),
     AggrTrades(AggrTradesEvent),
@@ -87,14 +87,14 @@ pub enum FuturesWebsocketEvent {
     UserDataStreamExpiredEvent(UserDataStreamExpiredEvent),
 }
 
-pub struct FuturesWebSockets {
+pub struct WebSockets {
     pub read: SplitStream<WebSocketStream<MaybeTlsStream<TcpStream>>>,
     pub write: SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-enum FuturesEvents {
+enum Events {
     Vec(Vec<DayTickerEvent>),
     DayTickerEvent(DayTickerEvent),
     BookTickerEvent(BookTickerEvent),
@@ -116,28 +116,42 @@ enum FuturesEvents {
     UserDataStreamExpiredEvent(UserDataStreamExpiredEvent),
 }
 
-impl FuturesWebSockets {
+impl WebSockets {
+    /// Connect to the Binance Websocket API.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection fails.
     pub async fn connect(market: &FuturesMarket, subscription: &str) -> Result<Self> {
-        Self::connect_wss(&FuturesWebsocketAPI::Default.params(market, subscription)).await
+        Self::connect_wss(&WebsocketsApi::Default.params(market, subscription)).await
     }
 
+    /// Connect to the Binance Websocket API with a custom configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection fails.
     pub async fn connect_with_config(
         market: &FuturesMarket,
         subscription: &str,
         config: &Config,
     ) -> Result<Self> {
         Self::connect_wss(
-            &FuturesWebsocketAPI::Custom(config.ws_endpoint.clone()).params(market, subscription),
+            &WebsocketsApi::Custom(config.ws_endpoint.clone()).params(market, subscription),
         )
         .await
     }
 
+    /// Connect to the Binance Websocket API with multiple streams.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection fails.
     pub async fn connect_multiple_streams(
         market: &FuturesMarket,
         endpoints: &[String],
     ) -> Result<Self> {
-        Self::connect_wss(&FuturesWebsocketAPI::MultiStream.params(market, &endpoints.join("/")))
-            .await
+        Self::connect_wss(&WebsocketsApi::MultiStream.params(market, &endpoints.join("/"))).await
     }
 
     async fn connect_wss(wss: &str) -> Result<Self> {
@@ -148,52 +162,60 @@ impl FuturesWebSockets {
                 debug!("Response: {}", response.status());
                 debug!("Response: {:?}", response.body());
                 let (write, read) = socket.split();
-                Ok(Self { write, read })
+                Ok(Self { read, write })
             }
             Err(e) => bail!(format!("Error during handshake {}", e)),
         }
     }
 
+    /// Disconnect from the Binance Websocket API.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the disconnection fails.
     pub async fn disconnect(&mut self) -> Result<()> {
         self.write.send(Message::Close(None)).await?;
         Ok(())
     }
 
-    fn handle_msg(msg: &str) -> Result<FuturesWebsocketEvent> {
+    fn handle_msg(msg: &str) -> Result<WebsocketEvent> {
         let value: serde_json::Value = serde_json::from_str(msg)?;
 
         if let Some(data) = value.get("data") {
             return Self::handle_msg(&data.to_string());
         }
 
-        let events = serde_json::from_value::<FuturesEvents>(value)?;
+        let events = serde_json::from_value::<Events>(value)?;
         let events = match events {
-            FuturesEvents::Vec(v) => FuturesWebsocketEvent::DayTickerAll(v),
-            FuturesEvents::DayTickerEvent(v) => FuturesWebsocketEvent::DayTicker(v),
-            FuturesEvents::BookTickerEvent(v) => FuturesWebsocketEvent::BookTicker(v),
-            FuturesEvents::MiniTickerEvent(v) => FuturesWebsocketEvent::MiniTicker(v),
-            FuturesEvents::VecMiniTickerEvent(v) => FuturesWebsocketEvent::MiniTickerAll(v),
-            FuturesEvents::AccountUpdateEvent(v) => FuturesWebsocketEvent::AccountUpdate(v),
-            FuturesEvents::OrderTradeEvent(v) => FuturesWebsocketEvent::OrderTrade(v),
-            FuturesEvents::IndexPriceEvent(v) => FuturesWebsocketEvent::IndexPrice(v),
-            FuturesEvents::MarkPriceEvent(v) => FuturesWebsocketEvent::MarkPrice(v),
-            FuturesEvents::VecMarkPriceEvent(v) => FuturesWebsocketEvent::MarkPriceAll(v),
-            FuturesEvents::TradeEvent(v) => FuturesWebsocketEvent::Trade(v),
-            FuturesEvents::ContinuousKlineEvent(v) => FuturesWebsocketEvent::ContinuousKline(v),
-            FuturesEvents::IndexKlineEvent(v) => FuturesWebsocketEvent::IndexKline(v),
-            FuturesEvents::LiquidationEvent(v) => FuturesWebsocketEvent::Liquidation(v),
-            FuturesEvents::KlineEvent(v) => FuturesWebsocketEvent::Kline(v),
-            FuturesEvents::OrderBook(v) => FuturesWebsocketEvent::OrderBook(v),
-            FuturesEvents::DepthOrderBookEvent(v) => FuturesWebsocketEvent::DepthOrderBook(v),
-            FuturesEvents::AggrTradesEvent(v) => FuturesWebsocketEvent::AggrTrades(v),
-            FuturesEvents::UserDataStreamExpiredEvent(v) => {
-                FuturesWebsocketEvent::UserDataStreamExpiredEvent(v)
-            }
+            Events::Vec(v) => WebsocketEvent::DayTickerAll(v),
+            Events::DayTickerEvent(v) => WebsocketEvent::DayTicker(v),
+            Events::BookTickerEvent(v) => WebsocketEvent::BookTicker(v),
+            Events::MiniTickerEvent(v) => WebsocketEvent::MiniTicker(v),
+            Events::VecMiniTickerEvent(v) => WebsocketEvent::MiniTickerAll(v),
+            Events::AccountUpdateEvent(v) => WebsocketEvent::AccountUpdate(v),
+            Events::OrderTradeEvent(v) => WebsocketEvent::OrderTrade(v),
+            Events::IndexPriceEvent(v) => WebsocketEvent::IndexPrice(v),
+            Events::MarkPriceEvent(v) => WebsocketEvent::MarkPrice(v),
+            Events::VecMarkPriceEvent(v) => WebsocketEvent::MarkPriceAll(v),
+            Events::TradeEvent(v) => WebsocketEvent::Trade(v),
+            Events::ContinuousKlineEvent(v) => WebsocketEvent::ContinuousKline(v),
+            Events::IndexKlineEvent(v) => WebsocketEvent::IndexKline(v),
+            Events::LiquidationEvent(v) => WebsocketEvent::Liquidation(v),
+            Events::KlineEvent(v) => WebsocketEvent::Kline(v),
+            Events::OrderBook(v) => WebsocketEvent::OrderBook(v),
+            Events::DepthOrderBookEvent(v) => WebsocketEvent::DepthOrderBook(v),
+            Events::AggrTradesEvent(v) => WebsocketEvent::AggrTrades(v),
+            Events::UserDataStreamExpiredEvent(v) => WebsocketEvent::UserDataStreamExpiredEvent(v),
         };
         Ok(events)
     }
 
-    pub async fn recv(&mut self) -> Result<Option<FuturesWebsocketEvent>> {
+    /// Receive a message from the Binance Websocket API.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the message fails to be received.
+    pub async fn recv(&mut self) -> Result<Option<WebsocketEvent>> {
         match self.read.next().await {
             Some(Ok(message)) => match message {
                 Message::Text(msg) => Ok(Some(Self::handle_msg(&msg)?)),

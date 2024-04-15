@@ -1,5 +1,4 @@
-use binance::api::*;
-use binance::futures::userstream::*;
+use binance::futures::user_stream::UserStream;
 
 #[tokio::main]
 async fn main() {
@@ -8,20 +7,20 @@ async fn main() {
 
 async fn user_stream() {
     let api_key_user = Some("YOUR_API_KEY".into());
-    let user_stream: FuturesUserStream = Binance::new(api_key_user, None).unwrap();
+    let user_stream = UserStream::new(api_key_user, None).unwrap();
 
     if let Ok(answer) = user_stream.start().await {
         println!("Data Stream Started ...");
         let listen_key = answer.listen_key;
 
         match user_stream.keep_alive(&listen_key).await {
-            Ok(msg) => println!("Keepalive user data stream: {:?}", msg),
-            Err(e) => println!("Error: {}", e),
+            Ok(msg) => println!("Keepalive user data stream: {msg:?}"),
+            Err(e) => println!("Error: {e}"),
         }
 
         match user_stream.close(&listen_key).await {
-            Ok(msg) => println!("Close user data stream: {:?}", msg),
-            Err(e) => println!("Error: {}", e),
+            Ok(msg) => println!("Close user data stream: {msg:?}"),
+            Err(e) => println!("Error: {e}"),
         }
     } else {
         println!("Not able to start an User Stream (Check your API_KEY)");

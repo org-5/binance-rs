@@ -1,11 +1,10 @@
-use binance::api::*;
 use binance::config::*;
 use binance::futures::account::*;
 
 #[cfg(test)]
 mod tests {
-    use binance::account::OrderSide;
     use binance::futures::model::Transaction;
+    use binance::spot::account::OrderSide;
     use float_cmp::*;
     use mockito::Matcher;
     use tokio::test;
@@ -27,7 +26,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let response = account.change_initial_leverage("LTCUSDT", 2).await.unwrap();
 
@@ -38,7 +37,7 @@ mod tests {
         assert!(approx_eq!(
             f64,
             response.max_notional_value,
-            9223372036854776000.0,
+            9_223_372_036_854_776_000.0,
             ulps = 2
         ));
     }
@@ -58,7 +57,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.cancel_all_open_orders("BTCUSDT").await.unwrap();
 
@@ -80,7 +79,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.change_position_mode(true).await.unwrap();
 
@@ -99,7 +98,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account
             .stop_market_close_buy("SRMUSDT", 10.5)
@@ -127,7 +126,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let transaction: Transaction = account
             .stop_market_close_sell("SRMUSDT", 7.4)
@@ -155,7 +154,7 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let custom_order = CustomOrderRequest {
             symbol: "SRMUSDT".into(),
@@ -201,13 +200,13 @@ mod tests {
         let config = Config::default()
             .set_futures_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: FuturesAccount = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let income_request = IncomeRequest {
             symbol: Some("BTCUSDT".into()),
             income_type: Some(IncomeType::TRANSFER),
-            start_time: Some(12345678910),
-            end_time: Some(12345678910),
+            start_time: Some(12_345_678_910),
+            end_time: Some(12_345_678_910),
             limit: Some(10),
         };
         account.get_income(income_request).await.unwrap();

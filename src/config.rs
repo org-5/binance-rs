@@ -24,6 +24,7 @@ impl Default for Config {
 }
 
 impl Config {
+    #[must_use]
     pub fn testnet() -> Self {
         Self::default()
             .set_rest_api_endpoint("https://testnet.binance.vision")
@@ -32,15 +33,22 @@ impl Config {
             .set_futures_ws_endpoint("https://testnet.binancefuture.com/ws")
     }
 
+    /// Sets the rest api endpoint of this [`Config`].
+    #[must_use]
     pub fn set_rest_api_endpoint<T: Into<String>>(mut self, rest_api_endpoint: T) -> Self {
         self.rest_api_endpoint = rest_api_endpoint.into();
         self
     }
 
+    /// Sets the ws endpoint of this [`Config`].
+    #[must_use]
     pub fn set_ws_endpoint<T: Into<String>>(mut self, ws_endpoint: T) -> Self {
         self.ws_endpoint = ws_endpoint.into();
         self
     }
+
+    /// Sets the futures rest api endpoint of this [`Config`].
+    #[must_use]
     pub fn set_futures_rest_api_endpoint<T: Into<String>>(
         mut self,
         futures_rest_api_endpoint: T,
@@ -49,11 +57,14 @@ impl Config {
         self
     }
 
+    /// Sets the futures ws endpoint of this [`Config`].
+    #[must_use]
     pub fn set_futures_ws_endpoint<T: Into<String>>(mut self, futures_ws_endpoint: T) -> Self {
         self.futures_ws_endpoint = futures_ws_endpoint.into();
         self
     }
 
+    #[must_use]
     pub fn set_recv_window(mut self, recv_window: u64) -> Self {
         self.recv_window = recv_window;
         self

@@ -1,7 +1,6 @@
-use binance::api::*;
 use binance::config::*;
-use binance::general::*;
 use binance::model::*;
+use binance::spot::general::*;
 
 #[cfg(test)]
 mod tests {
@@ -20,7 +19,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let general: General = Binance::new_with_config(None, None, &config).unwrap();
+        let general = General::new_with_config(None, None, &config).unwrap();
 
         let pong = general.ping().await.unwrap();
         mock_ping.assert();
@@ -38,13 +37,13 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
+        let mut general = General::new_with_config(None, None, &config).unwrap();
         general.update_cache().await.unwrap();
 
         let server_time = general.get_server_time().unwrap();
         mock_server_time.assert();
 
-        assert_eq!(server_time.server_time, 1614694549948);
+        assert_eq!(server_time.server_time, 1_614_694_549_948);
     }
 
     #[test]
@@ -57,7 +56,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
+        let mut general = General::new_with_config(None, None, &config).unwrap();
         general.update_cache().await.unwrap();
 
         let exchange_info = general.exchange_info().unwrap().0;
@@ -76,7 +75,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let mut general: General = Binance::new_with_config(None, None, &config).unwrap();
+        let mut general = General::new_with_config(None, None, &config).unwrap();
         general.update_cache().await.unwrap();
 
         let symbol = general.get_symbol_info("BNBBTC").unwrap();
@@ -102,7 +101,7 @@ mod tests {
 
         assert!(!symbol.filters.is_empty());
 
-        for filter in symbol.filters.into_iter() {
+        for filter in symbol.filters {
             match filter {
                 Filters::PriceFilter {
                     min_price,

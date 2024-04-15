@@ -1,7 +1,5 @@
-use binance::account::*;
-use binance::api::*;
 use binance::config::*;
-use binance::model::*;
+use binance::spot::account::*;
 
 #[cfg(test)]
 mod tests {
@@ -26,7 +24,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let account = account.get_account().await.unwrap();
 
@@ -68,7 +66,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let balance = account.get_balance("BTC").await.unwrap();
 
@@ -94,7 +92,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let open_orders = account.get_open_orders("LTCBTC").await.unwrap();
 
@@ -117,8 +115,8 @@ mod tests {
         assert_eq!(open_order.side, "BUY");
         assert!(approx_eq!(f64, open_order.stop_price, 0.0, ulps = 2));
         assert_eq!(open_order.iceberg_qty, "0.0");
-        assert_eq!(open_order.time, 1499827319559);
-        assert_eq!(open_order.update_time, 1499827319559);
+        assert_eq!(open_order.time, 1_499_827_319_559);
+        assert_eq!(open_order.update_time, 1_499_827_319_559);
         assert!(open_order.is_working);
         assert_eq!(open_order.orig_quote_order_qty, "0.000000");
     }
@@ -136,7 +134,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let open_orders = account.get_all_open_orders().await.unwrap();
 
@@ -159,8 +157,8 @@ mod tests {
         assert_eq!(open_order.side, "BUY");
         assert!(approx_eq!(f64, open_order.stop_price, 0.0, ulps = 2));
         assert_eq!(open_order.iceberg_qty, "0.0");
-        assert_eq!(open_order.time, 1499827319559);
-        assert_eq!(open_order.update_time, 1499827319559);
+        assert_eq!(open_order.time, 1_499_827_319_559);
+        assert_eq!(open_order.update_time, 1_499_827_319_559);
         assert!(open_order.is_working);
         assert_eq!(open_order.orig_quote_order_qty, "0.000000");
     }
@@ -180,7 +178,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let cancel_all_open_orders = account.cancel_all_open_orders("BTCUSDT").await.unwrap();
 
@@ -188,7 +186,7 @@ mod tests {
 
         assert!(cancel_all_open_orders.len() == 3);
 
-        let first_order_cancelled: OrderCanceled = cancel_all_open_orders[0].clone();
+        let first_order_cancelled = cancel_all_open_orders[0].clone();
         assert_eq!(first_order_cancelled.symbol, "BTCUSDT");
         assert_eq!(
             first_order_cancelled.orig_client_order_id.unwrap(),
@@ -200,7 +198,7 @@ mod tests {
             "pXLV6Hz6mprAcVYpVMTGgx"
         );
 
-        let second_order_cancelled: OrderCanceled = cancel_all_open_orders[1].clone();
+        let second_order_cancelled = cancel_all_open_orders[1].clone();
         assert_eq!(second_order_cancelled.symbol, "BTCUSDT");
         assert_eq!(
             second_order_cancelled.orig_client_order_id.unwrap(),
@@ -228,9 +226,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let order_status: Order = account.order_status("LTCBTC", 1).await.unwrap();
+        let order_status = account.order_status("LTCBTC", 1).await.unwrap();
 
         mock_order_status.assert();
 
@@ -248,8 +246,8 @@ mod tests {
         assert_eq!(order_status.side, "BUY");
         assert!(approx_eq!(f64, order_status.stop_price, 0.0, ulps = 2));
         assert_eq!(order_status.iceberg_qty, "0.0");
-        assert_eq!(order_status.time, 1499827319559);
-        assert_eq!(order_status.update_time, 1499827319559);
+        assert_eq!(order_status.time, 1_499_827_319_559);
+        assert_eq!(order_status.update_time, 1_499_827_319_559);
         assert!(order_status.is_working);
         assert_eq!(order_status.orig_quote_order_qty, "0.000000");
     }
@@ -269,7 +267,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_order_status("LTCBTC", 1).await.unwrap();
 
@@ -288,9 +286,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let transaction: Transaction = account.limit_buy("LTCBTC", 1, 0.1).await.unwrap();
+        let transaction = account.limit_buy("LTCBTC", 1, 0.1).await.unwrap();
 
         mock_limit_buy.assert();
 
@@ -298,7 +296,7 @@ mod tests {
         assert_eq!(transaction.order_id, 1);
         assert_eq!(transaction.order_list_id.unwrap(), -1);
         assert_eq!(transaction.client_order_id, "6gCrw2kRUAF9CvJDGP16IP");
-        assert_eq!(transaction.transact_time, 1507725176595);
+        assert_eq!(transaction.transact_time, 1_507_725_176_595);
         assert!(approx_eq!(f64, transaction.price, 0.1, ulps = 2));
         assert!(approx_eq!(f64, transaction.orig_qty, 1.0, ulps = 2));
         assert!(approx_eq!(f64, transaction.executed_qty, 1.0, ulps = 2));
@@ -326,7 +324,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_limit_buy("LTCBTC", 1, 0.1).await.unwrap();
 
@@ -345,9 +343,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let transaction: Transaction = account.limit_sell("LTCBTC", 1, 0.1).await.unwrap();
+        let transaction = account.limit_sell("LTCBTC", 1, 0.1).await.unwrap();
 
         mock_limit_sell.assert();
 
@@ -355,7 +353,7 @@ mod tests {
         assert_eq!(transaction.order_id, 1);
         assert_eq!(transaction.order_list_id.unwrap(), -1);
         assert_eq!(transaction.client_order_id, "6gCrw2kRUAF9CvJDGP16IP");
-        assert_eq!(transaction.transact_time, 1507725176595);
+        assert_eq!(transaction.transact_time, 1_507_725_176_595);
         assert!(approx_eq!(f64, transaction.price, 0.1, ulps = 2));
         assert!(approx_eq!(f64, transaction.orig_qty, 1.0, ulps = 2));
         assert!(approx_eq!(f64, transaction.executed_qty, 1.0, ulps = 2));
@@ -383,7 +381,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_limit_sell("LTCBTC", 1, 0.1).await.unwrap();
 
@@ -406,9 +404,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let transaction: Transaction = account.market_buy("LTCBTC", 1).await.unwrap();
+        let transaction = account.market_buy("LTCBTC", 1).await.unwrap();
 
         mock_market_buy.assert();
 
@@ -416,7 +414,7 @@ mod tests {
         assert_eq!(transaction.order_id, 1);
         assert_eq!(transaction.order_list_id.unwrap(), -1);
         assert_eq!(transaction.client_order_id, "6gCrw2kRUAF9CvJDGP16IP");
-        assert_eq!(transaction.transact_time, 1507725176595);
+        assert_eq!(transaction.transact_time, 1_507_725_176_595);
         assert!(approx_eq!(f64, transaction.price, 0.1, ulps = 2));
         assert!(approx_eq!(f64, transaction.orig_qty, 1.0, ulps = 2));
         assert!(approx_eq!(f64, transaction.executed_qty, 1.0, ulps = 2));
@@ -448,7 +446,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_market_buy("LTCBTC", 1).await.unwrap();
 
@@ -467,7 +465,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         match account
             .market_buy_using_quote_quantity("BNBBTC", 0.002)
@@ -494,7 +492,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_market_buy_using_quote_quantity("BNBBTC", 0.002)
@@ -520,9 +518,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let transaction: Transaction = account.market_sell("LTCBTC", 1).await.unwrap();
+        let transaction = account.market_sell("LTCBTC", 1).await.unwrap();
 
         mock_market_sell.assert();
 
@@ -530,7 +528,7 @@ mod tests {
         assert_eq!(transaction.order_id, 1);
         assert_eq!(transaction.order_list_id.unwrap(), -1);
         assert_eq!(transaction.client_order_id, "6gCrw2kRUAF9CvJDGP16IP");
-        assert_eq!(transaction.transact_time, 1507725176595);
+        assert_eq!(transaction.transact_time, 1_507_725_176_595);
         assert!(approx_eq!(f64, transaction.price, 0.1, ulps = 2));
         assert!(approx_eq!(f64, transaction.orig_qty, 1.0, ulps = 2));
         assert!(approx_eq!(f64, transaction.executed_qty, 1.0, ulps = 2));
@@ -562,7 +560,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_market_sell("LTCBTC", 1).await.unwrap();
 
@@ -581,7 +579,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         match account
             .market_sell_using_quote_quantity("BNBBTC", 0.002)
@@ -608,7 +606,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_market_sell_using_quote_quantity("BNBBTC", 0.002)
@@ -630,9 +628,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let transaction: Transaction = account
+        let transaction = account
             .stop_limit_buy_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
             .await
             .unwrap();
@@ -643,7 +641,7 @@ mod tests {
         assert_eq!(transaction.order_id, 1);
         assert_eq!(transaction.order_list_id.unwrap(), -1);
         assert_eq!(transaction.client_order_id, "6gCrw2kRUAF9CvJDGP16IP");
-        assert_eq!(transaction.transact_time, 1507725176595);
+        assert_eq!(transaction.transact_time, 1_507_725_176_595);
         assert!(approx_eq!(f64, transaction.price, 0.1, ulps = 2));
         assert!(approx_eq!(f64, transaction.orig_qty, 1.0, ulps = 2));
         assert!(approx_eq!(f64, transaction.executed_qty, 1.0, ulps = 2));
@@ -672,7 +670,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_stop_limit_buy_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
@@ -694,9 +692,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let transaction: Transaction = account
+        let transaction = account
             .stop_limit_sell_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
             .await
             .unwrap();
@@ -707,7 +705,7 @@ mod tests {
         assert_eq!(transaction.order_id, 1);
         assert_eq!(transaction.order_list_id.unwrap(), -1);
         assert_eq!(transaction.client_order_id, "6gCrw2kRUAF9CvJDGP16IP");
-        assert_eq!(transaction.transact_time, 1507725176595);
+        assert_eq!(transaction.transact_time, 1_507_725_176_595);
         assert!(approx_eq!(f64, transaction.price, 0.1, ulps = 2));
         assert!(approx_eq!(f64, transaction.orig_qty, 1.0, ulps = 2));
         assert!(approx_eq!(f64, transaction.executed_qty, 1.0, ulps = 2));
@@ -736,7 +734,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_stop_limit_sell_order("LTCBTC", 1, 0.1, 0.09, TimeInForce::GTC)
@@ -758,9 +756,9 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
-        let transaction: Transaction = account
+        let transaction = account
             .custom_order(
                 "LTCBTC",
                 1,
@@ -780,7 +778,7 @@ mod tests {
         assert_eq!(transaction.order_id, 1);
         assert_eq!(transaction.order_list_id.unwrap(), -1);
         assert_eq!(transaction.client_order_id, "6gCrw2kRUAF9CvJDGP16IP");
-        assert_eq!(transaction.transact_time, 1507725176595);
+        assert_eq!(transaction.transact_time, 1_507_725_176_595);
         assert!(approx_eq!(f64, transaction.price, 0.1, ulps = 2));
         assert!(approx_eq!(f64, transaction.orig_qty, 1.0, ulps = 2));
         assert!(approx_eq!(f64, transaction.executed_qty, 1.0, ulps = 2));
@@ -809,7 +807,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account
             .test_custom_order(
@@ -843,7 +841,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let cancelled_order = account.cancel_order("BTCUSDT", 1).await.unwrap();
 
@@ -870,7 +868,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         account.test_cancel_order("BTCUSDT", 1).await.unwrap();
 
@@ -892,7 +890,7 @@ mod tests {
         let config = Config::default()
             .set_rest_api_endpoint(server.url())
             .set_recv_window(1234);
-        let account: Account = Binance::new_with_config(None, None, &config).unwrap();
+        let account = Account::new_with_config(None, None, &config).unwrap();
         let _ = env_logger::try_init();
         let histories = account.trade_history("BTCUSDT").await.unwrap();
 
@@ -900,14 +898,14 @@ mod tests {
 
         assert!(histories.len() == 1);
 
-        let history: TradeHistory = histories[0].clone();
+        let history = histories[0].clone();
 
         assert_eq!(history.id, 28457);
-        assert!(approx_eq!(f64, history.price, 4.00000100, ulps = 2));
-        assert!(approx_eq!(f64, history.qty, 12.00000000, ulps = 2));
+        assert!(approx_eq!(f64, history.price, 4.000_001_00, ulps = 2));
+        assert!(approx_eq!(f64, history.qty, 12.000_000_00, ulps = 2));
         assert_eq!(history.commission, "10.10000000");
         assert_eq!(history.commission_asset, "BNB");
-        assert_eq!(history.time, 1499865549590);
+        assert_eq!(history.time, 1_499_865_549_590);
         assert!(history.is_buyer);
         assert!(!history.is_maker);
         assert!(history.is_best_match);

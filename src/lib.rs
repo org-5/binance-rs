@@ -21,13 +21,9 @@ pub mod util;
 
 pub mod model;
 
-pub mod account;
 pub mod api;
 pub mod config;
-pub mod general;
-pub mod market;
 pub mod savings;
-pub mod userstream;
-pub mod websockets;
 
 pub mod futures;
+pub mod spot;

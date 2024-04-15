@@ -1,22 +1,22 @@
 use std::collections::BTreeMap;
-use std::convert::TryInto;
 
 use serde_json::Value;
 
+use super::model::AggTrade;
+use super::model::AveragePrice;
+use super::model::BookTickers;
+use super::model::KlineSummaries;
+use super::model::KlineSummary;
+use super::model::OrderBook;
+use super::model::PriceStats;
+use super::model::Prices;
+use super::model::SymbolPrice;
+use super::model::Tickers;
 use crate::api::Spot;
 use crate::api::API;
 use crate::client::Client;
+use crate::config::Config;
 use crate::errors::Result;
-use crate::model::AggTrade;
-use crate::model::AveragePrice;
-use crate::model::BookTickers;
-use crate::model::KlineSummaries;
-use crate::model::KlineSummary;
-use crate::model::OrderBook;
-use crate::model::PriceStats;
-use crate::model::Prices;
-use crate::model::SymbolPrice;
-use crate::model::Tickers;
 use crate::util::build_request;
 
 #[derive(Clone, Debug)]
@@ -27,7 +27,36 @@ pub struct Market {
 
 // Market Data endpoints
 impl Market {
-    // Order book at the default depth of 100
+    /// Initialize a new Market instance
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the client cannot be initialized
+    pub fn new(api_key: Option<String>, secret_key: Option<String>) -> Result<Self> {
+        Self::new_with_config(api_key, secret_key, &Config::default())
+    }
+
+    /// Initialize a new Market instance with a configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the client cannot be initialized
+    pub fn new_with_config(
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
+    ) -> Result<Self> {
+        Ok(Self {
+            client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone())?,
+            recv_window: config.recv_window,
+        })
+    }
+
+    /// Order book at the default depth of 100
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_depth<S>(&self, symbol: S) -> Result<OrderBook>
     where
         S: Into<String>,
@@ -38,8 +67,12 @@ impl Market {
         self.client.get(API::Spot(Spot::Depth), Some(request)).await
     }
 
-    // Order book at a custom depth. Currently supported values
-    // are 5, 10, 20, 50, 100, 500, 1000 and 5000
+    /// Order book at a custom depth. Currently supported values
+    /// are 5, 10, 20, 50, 100, 500, 1000 and 5000
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_custom_depth<S>(&self, symbol: S, depth: u64) -> Result<OrderBook>
     where
         S: Into<String>,
@@ -51,12 +84,20 @@ impl Market {
         self.client.get(API::Spot(Spot::Depth), Some(request)).await
     }
 
-    // Latest price for ALL symbols.
+    /// Latest price for ALL symbols.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_all_prices(&self) -> Result<Prices> {
         self.client.get(API::Spot(Spot::Price), None).await
     }
 
-    // Latest price for ONE symbol.
+    /// Latest price for ONE symbol.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_price<S>(&self, symbol: S) -> Result<SymbolPrice>
     where
         S: Into<String>,
@@ -67,7 +108,11 @@ impl Market {
         self.client.get(API::Spot(Spot::Price), Some(request)).await
     }
 
-    // Average price for ONE symbol.
+    /// Average price for ONE symbol.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_average_price<S>(&self, symbol: S) -> Result<AveragePrice>
     where
         S: Into<String>,
@@ -80,13 +125,21 @@ impl Market {
             .await
     }
 
-    // Symbols order book ticker
-    // -> Best price/qty on the order book for ALL symbols.
+    /// Symbols order book ticker
+    /// -> Best price/qty on the order book for ALL symbols.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_all_book_tickers(&self) -> Result<BookTickers> {
         self.client.get(API::Spot(Spot::BookTicker), None).await
     }
 
-    // -> Best price/qty on the order book for ONE symbol
+    /// -> Best price/qty on the order book for ONE symbol
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_book_ticker<S>(&self, symbol: S) -> Result<Tickers>
     where
         S: Into<String>,
@@ -99,7 +152,11 @@ impl Market {
             .await
     }
 
-    // 24hr ticker price change statistics
+    /// 24hr ticker price change statistics
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_24h_price_stats<S>(&self, symbol: S) -> Result<PriceStats>
     where
         S: Into<String>,
@@ -112,16 +169,24 @@ impl Market {
             .await
     }
 
-    // 24hr ticker price change statistics for all symbols
+    /// 24hr ticker price change statistics for all symbols
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_all_24h_price_stats(&self) -> Result<Vec<PriceStats>> {
         self.client.get(API::Spot(Spot::Ticker24hr), None).await
     }
 
     /// Get aggregated historical trades.
     ///
-    /// If you provide start_time, you also need to provide end_time.
-    /// If from_id, start_time and end_time are omitted, the most recent trades
+    /// If you provide `start_time`, you also need to provide `end_time`.
+    /// If `from_id`, `start_time` and `end_time` are omitted, the most recent trades
     /// are fetched.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_agg_trades<S1, S2, S3, S4, S5>(
         &self,
         symbol: S1,
@@ -143,16 +208,16 @@ impl Market {
 
         // Add three optional parameters
         if let Some(lt) = limit.into() {
-            parameters.insert("limit".into(), format!("{}", lt));
+            parameters.insert("limit".into(), format!("{lt}"));
         }
         if let Some(st) = start_time.into() {
-            parameters.insert("startTime".into(), format!("{}", st));
+            parameters.insert("startTime".into(), format!("{st}"));
         }
         if let Some(et) = end_time.into() {
-            parameters.insert("endTime".into(), format!("{}", et));
+            parameters.insert("endTime".into(), format!("{et}"));
         }
         if let Some(fi) = from_id.into() {
-            parameters.insert("fromId".into(), format!("{}", fi));
+            parameters.insert("fromId".into(), format!("{fi}"));
         }
 
         let request = build_request(parameters);
@@ -162,8 +227,12 @@ impl Market {
             .await
     }
 
-    // Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
-    // https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data
+    /// Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
+    /// [docs](https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request does not succeed.
     pub async fn get_klines<S1, S2, S3, S4, S5>(
         &self,
         symbol: S1,
@@ -186,13 +255,13 @@ impl Market {
 
         // Add three optional parameters
         if let Some(lt) = limit.into() {
-            parameters.insert("limit".into(), format!("{}", lt));
+            parameters.insert("limit".into(), format!("{lt}"));
         }
         if let Some(st) = start_time.into() {
-            parameters.insert("startTime".into(), format!("{}", st));
+            parameters.insert("startTime".into(), format!("{st}"));
         }
         if let Some(et) = end_time.into() {
-            parameters.insert("endTime".into(), format!("{}", et));
+            parameters.insert("endTime".into(), format!("{et}"));
         }
 
         let request = build_request(parameters);
@@ -203,7 +272,7 @@ impl Market {
 
         let klines = KlineSummaries::AllKlineSummaries(
             data.iter()
-                .map(|row| row.try_into())
+                .map(std::convert::TryInto::try_into)
                 .collect::<Result<Vec<KlineSummary>>>()?,
         );
 

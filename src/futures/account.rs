@@ -7,18 +7,19 @@ use super::model::CanceledOrder;
 use super::model::ChangeLeverageResponse;
 use super::model::PositionRisk;
 use super::model::Transaction;
-use crate::account::OrderSide;
 use crate::api::Futures;
 use crate::api::API;
 use crate::client::Client;
+use crate::config::Config;
 use crate::errors::Result;
 use crate::futures::model::Order;
 use crate::futures::model::TradeHistory;
 use crate::model::Empty;
+use crate::spot::account::OrderSide;
 use crate::util::build_signed_request;
 
 #[derive(Clone)]
-pub struct FuturesAccount {
+pub struct Account {
     pub client: Client,
     pub recv_window: u64,
 }
@@ -207,7 +208,43 @@ impl Display for IncomeType {
     }
 }
 
-impl FuturesAccount {
+impl Account {
+    /// Create a new Account instance.
+    /// If `api_key` an`secret_key` are provided, the client will be authenticated.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the client cannot be created.
+    pub fn new(api_key: Option<String>, secret_key: Option<String>) -> Result<Self> {
+        Self::new_with_config(api_key, secret_key, &Config::default())
+    }
+
+    /// Create a new Account instance with a configuration.
+    /// If `api_key` an `secret_key` are provided, the client will be authenticated.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the client cannot be created.    
+    pub fn new_with_config(
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
+    ) -> Result<Self> {
+        Ok(Self {
+            client: Client::new(
+                api_key,
+                secret_key,
+                config.futures_rest_api_endpoint.clone(),
+            )?,
+            recv_window: config.recv_window,
+        })
+    }
+
+    /// Places a limit buy order
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn limit_buy(
         &self,
         symbol: impl Into<String>,
@@ -231,13 +268,18 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
         };
-        let order = self.build_order(buy);
+        let order = build_order(buy);
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed(API::Futures(Futures::Order), request)
             .await
     }
 
+    /// Places a limit sell order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn limit_sell(
         &self,
         symbol: impl Into<String>,
@@ -245,7 +287,7 @@ impl FuturesAccount {
         price: f64,
         time_in_force: TimeInForce,
     ) -> Result<Transaction> {
-        let sell = OrderRequest {
+        let order = OrderRequest {
             symbol: symbol.into(),
             side: OrderSide::Sell,
             position_side: None,
@@ -261,14 +303,18 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
         };
-        let order = self.build_order(sell);
+        let order = build_order(order);
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed(API::Futures(Futures::Order), request)
             .await
     }
 
-    // Place a MARKET order - BUY
+    /// Places a market buy order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn market_buy<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
     where
         S: Into<String>,
@@ -290,20 +336,24 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
         };
-        let order = self.build_order(buy);
+        let order = build_order(buy);
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed(API::Futures(Futures::Order), request)
             .await
     }
 
-    // Place a MARKET order - SELL
+    /// Place a sell market order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn market_sell<S, F>(&self, symbol: S, qty: F) -> Result<Transaction>
     where
         S: Into<String>,
         F: Into<f64>,
     {
-        let sell = OrderRequest {
+        let sell_order = OrderRequest {
             symbol: symbol.into(),
             side: OrderSide::Sell,
             position_side: None,
@@ -319,13 +369,18 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
         };
-        let order = self.build_order(sell);
+        let order = build_order(sell_order);
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed(API::Futures(Futures::Order), request)
             .await
     }
 
+    /// Cancels an order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn cancel_order<S>(&self, symbol: S, order_id: u64) -> Result<CanceledOrder>
     where
         S: Into<String>,
@@ -340,6 +395,11 @@ impl FuturesAccount {
             .await
     }
 
+    /// Cancels an order by client id.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn cancel_order_with_client_id<S>(
         &self,
         symbol: S,
@@ -358,13 +418,17 @@ impl FuturesAccount {
             .await
     }
 
-    // Place a STOP_MARKET close - BUY
+    /// Place a `OrderType::StopMarket` buy order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn stop_market_close_buy<S, F>(&self, symbol: S, stop_price: F) -> Result<Transaction>
     where
         S: Into<String>,
         F: Into<f64>,
     {
-        let sell = OrderRequest {
+        let order = OrderRequest {
             symbol: symbol.into(),
             side: OrderSide::Buy,
             position_side: None,
@@ -380,14 +444,18 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
         };
-        let order = self.build_order(sell);
+        let order = build_order(order);
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed(API::Futures(Futures::Order), request)
             .await
     }
 
-    // Place a STOP_MARKET close - SELL
+    /// Place a `OrderType::StopMarket` sell order.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn stop_market_close_sell<S, F>(
         &self,
         symbol: S,
@@ -397,7 +465,7 @@ impl FuturesAccount {
         S: Into<String>,
         F: Into<f64>,
     {
-        let sell = OrderRequest {
+        let order = OrderRequest {
             symbol: symbol.into(),
             side: OrderSide::Sell,
             position_side: None,
@@ -413,14 +481,18 @@ impl FuturesAccount {
             working_type: None,
             price_protect: None,
         };
-        let order = self.build_order(sell);
+        let order = build_order(order);
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed(API::Futures(Futures::Order), request)
             .await
     }
 
-    // Custom order for for professional traders
+    /// Custom order for  professional traders
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn custom_order(&self, order_request: CustomOrderRequest) -> Result<Transaction> {
         let order = OrderRequest {
             symbol: order_request.symbol,
@@ -438,13 +510,18 @@ impl FuturesAccount {
             working_type: order_request.working_type,
             price_protect: order_request.price_protect,
         };
-        let order = self.build_order(order);
+        let order = build_order(order);
         let request = build_signed_request(order, self.recv_window)?;
         self.client
             .post_signed(API::Futures(Futures::Order), request)
             .await
     }
 
+    /// Get all orders
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn get_all_orders<S, F, N>(
         &self,
         symbol: S,
@@ -479,6 +556,11 @@ impl FuturesAccount {
             .await
     }
 
+    /// Get user trades
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the order placement fails.
     pub async fn get_user_trades<S, F, N>(
         &self,
         symbol: S,
@@ -512,55 +594,12 @@ impl FuturesAccount {
             .get_signed(API::Futures(Futures::UserTrades), Some(request))
             .await
     }
-    fn build_order(&self, order: OrderRequest) -> BTreeMap<String, String> {
-        let mut parameters = BTreeMap::new();
-        parameters.insert("symbol".into(), order.symbol);
-        parameters.insert("side".into(), order.side.to_string());
-        parameters.insert("type".into(), order.order_type.to_string());
 
-        if let Some(position_side) = order.position_side {
-            parameters.insert("positionSide".into(), position_side.to_string());
-        }
-        if let Some(time_in_force) = order.time_in_force {
-            parameters.insert("timeInForce".into(), time_in_force.to_string());
-        }
-        if let Some(qty) = order.qty {
-            parameters.insert("quantity".into(), qty.to_string());
-        }
-        if let Some(reduce_only) = order.reduce_only {
-            parameters.insert("reduceOnly".into(), reduce_only.to_string().to_uppercase());
-        }
-        if let Some(price) = order.price {
-            parameters.insert("price".into(), price.to_string());
-        }
-        if let Some(stop_price) = order.stop_price {
-            parameters.insert("stopPrice".into(), stop_price.to_string());
-        }
-        if let Some(close_position) = order.close_position {
-            parameters.insert(
-                "closePosition".into(),
-                close_position.to_string().to_uppercase(),
-            );
-        }
-        if let Some(activation_price) = order.activation_price {
-            parameters.insert("activationPrice".into(), activation_price.to_string());
-        }
-        if let Some(callback_rate) = order.callback_rate {
-            parameters.insert("callbackRate".into(), callback_rate.to_string());
-        }
-        if let Some(working_type) = order.working_type {
-            parameters.insert("workingType".into(), working_type.to_string());
-        }
-        if let Some(price_protect) = order.price_protect {
-            parameters.insert(
-                "priceProtect".into(),
-                price_protect.to_string().to_uppercase(),
-            );
-        }
-
-        parameters
-    }
-
+    /// Get open positions information.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn position_information<S>(&self, symbol: S) -> Result<Vec<PositionRisk>>
     where
         S: Into<String>,
@@ -574,6 +613,11 @@ impl FuturesAccount {
             .await
     }
 
+    /// Get account information.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn account_information(&self) -> Result<AccountInformation> {
         let parameters = BTreeMap::new();
 
@@ -583,6 +627,11 @@ impl FuturesAccount {
             .await
     }
 
+    /// Get account balance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn account_balance(&self) -> Result<Vec<AccountBalance>> {
         let parameters = BTreeMap::new();
 
@@ -592,6 +641,11 @@ impl FuturesAccount {
             .await
     }
 
+    /// Change initial leverage.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn change_initial_leverage<S>(
         &self,
         symbol: S,
@@ -610,6 +664,11 @@ impl FuturesAccount {
             .await
     }
 
+    /// Change position mode.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn change_position_mode(&self, dual_side_position: bool) -> Result<()> {
         let mut parameters: BTreeMap<String, String> = BTreeMap::new();
         let dual_side = if dual_side_position { "true" } else { "false" };
@@ -622,6 +681,11 @@ impl FuturesAccount {
             .map(|_| ())
     }
 
+    /// Get all open orders.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn cancel_all_open_orders<S>(&self, symbol: S) -> Result<()>
     where
         S: Into<String>,
@@ -635,6 +699,11 @@ impl FuturesAccount {
             .map(|_| ())
     }
 
+    /// Get all open orders.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn get_all_open_orders<S>(
         &self,
         symbol: S,
@@ -650,6 +719,11 @@ impl FuturesAccount {
             .await
     }
 
+    /// Get income history.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if sending the request fails.
     pub async fn get_income(
         &self,
         income_request: IncomeRequest,
@@ -672,9 +746,59 @@ impl FuturesAccount {
         }
 
         let request = build_signed_request(parameters, self.recv_window)?;
-        println!("{}", request);
+        println!("{request}");
         self.client
             .get_signed(API::Futures(Futures::Income), Some(request))
             .await
     }
+}
+
+/// Build order from request.
+fn build_order(order: OrderRequest) -> BTreeMap<String, String> {
+    let mut parameters = BTreeMap::new();
+    parameters.insert("symbol".into(), order.symbol);
+    parameters.insert("side".into(), order.side.to_string());
+    parameters.insert("type".into(), order.order_type.to_string());
+
+    if let Some(position_side) = order.position_side {
+        parameters.insert("positionSide".into(), position_side.to_string());
+    }
+    if let Some(time_in_force) = order.time_in_force {
+        parameters.insert("timeInForce".into(), time_in_force.to_string());
+    }
+    if let Some(qty) = order.qty {
+        parameters.insert("quantity".into(), qty.to_string());
+    }
+    if let Some(reduce_only) = order.reduce_only {
+        parameters.insert("reduceOnly".into(), reduce_only.to_string().to_uppercase());
+    }
+    if let Some(price) = order.price {
+        parameters.insert("price".into(), price.to_string());
+    }
+    if let Some(stop_price) = order.stop_price {
+        parameters.insert("stopPrice".into(), stop_price.to_string());
+    }
+    if let Some(close_position) = order.close_position {
+        parameters.insert(
+            "closePosition".into(),
+            close_position.to_string().to_uppercase(),
+        );
+    }
+    if let Some(activation_price) = order.activation_price {
+        parameters.insert("activationPrice".into(), activation_price.to_string());
+    }
+    if let Some(callback_rate) = order.callback_rate {
+        parameters.insert("callbackRate".into(), callback_rate.to_string());
+    }
+    if let Some(working_type) = order.working_type {
+        parameters.insert("workingType".into(), working_type.to_string());
+    }
+    if let Some(price_protect) = order.price_protect {
+        parameters.insert(
+            "priceProtect".into(),
+            price_protect.to_string().to_uppercase(),
+        );
+    }
+
+    parameters
 }

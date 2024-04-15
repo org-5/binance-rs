@@ -10,3 +10,4 @@ pub use general::General;
 pub use market::Market;
 pub use user_stream::UserStream;
 pub use websockets::WebSockets;
+pub use websockets::WebsocketEvent;

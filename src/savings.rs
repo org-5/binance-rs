@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use crate::api::Sapi;
 use crate::api::API;
 use crate::client::Client;
+use crate::config::Config;
 use crate::errors::Result;
 use crate::model::AssetDetail;
 use crate::model::CoinInfo;
@@ -18,7 +19,36 @@ pub struct Savings {
 }
 
 impl Savings {
+    /// Initialize a new Savings instance
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the client cannot be initialized
+    pub fn new(api_key: Option<String>, secret_key: Option<String>) -> Result<Self> {
+        Self::new_with_config(api_key, secret_key, &Config::default())
+    }
+
+    /// Initialize a new Savings instance with a configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the client cannot be initialized
+    pub fn new_with_config(
+        api_key: Option<String>,
+        secret_key: Option<String>,
+        config: &Config,
+    ) -> Result<Self> {
+        Ok(Self {
+            client: Client::new(api_key, secret_key, config.rest_api_endpoint.clone())?,
+            recv_window: config.recv_window,
+        })
+    }
+
     /// Get all coins available for deposit and withdrawal
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn get_all_coins(&self) -> Result<Vec<CoinInfo>> {
         let request = build_signed_request(BTreeMap::new(), self.recv_window)?;
         self.client
@@ -27,6 +57,10 @@ impl Savings {
     }
 
     /// Fetch details of assets supported on Binance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn asset_detail(
         &self,
         asset: Option<String>,
@@ -46,6 +80,10 @@ impl Savings {
     /// You can get the available networks using `get_all_coins`.
     /// If no network is specified, the address for the default network is
     /// returned.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn deposit_address<S>(
         &self,
         coin: S,
@@ -65,6 +103,11 @@ impl Savings {
             .await
     }
 
+    /// Fetch deposit history.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request fails.
     pub async fn transfer_funds<S>(
         &self,
         asset: S,

@@ -1,10 +1,10 @@
-use binance::api::*;
 use binance::config::*;
-use binance::market::*;
 use binance::model::*;
+use binance::spot::market::*;
 
 #[cfg(test)]
 mod tests {
+    use binance::spot::model::Prices;
     use float_cmp::*;
     use mockito::Matcher;
     use rust_decimal::prelude::FromPrimitive;
@@ -23,17 +23,17 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let order_book = market.get_depth("LTCBTC").await.unwrap();
         mock_get_depth.assert();
 
-        assert_eq!(order_book.last_update_id, 1027024);
+        assert_eq!(order_book.last_update_id, 1_027_024);
         assert_eq!(
             order_book.bids[0],
             Bids::new(
-                rust_decimal::Decimal::from_f64(4.00000000).unwrap(),
-                rust_decimal::Decimal::from_f64(431.00000000).unwrap()
+                rust_decimal::Decimal::from_f64(4.000_000_00).unwrap(),
+                rust_decimal::Decimal::from_f64(431.000_000_00).unwrap()
             )
         );
     }
@@ -49,17 +49,17 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let order_book = market.get_custom_depth("LTCBTC", 10).await.unwrap();
         mock_get_custom_depth.assert();
 
-        assert_eq!(order_book.last_update_id, 1027024);
+        assert_eq!(order_book.last_update_id, 1_027_024);
         assert_eq!(
             order_book.bids[0],
             Bids::new(
-                rust_decimal::Decimal::from_f64(4.00000000).unwrap(),
-                rust_decimal::Decimal::from_f64(431.00000000).unwrap()
+                rust_decimal::Decimal::from_f64(4.000_000_00).unwrap(),
+                rust_decimal::Decimal::from_f64(431.000_000_00).unwrap()
             )
         );
     }
@@ -74,20 +74,20 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
-        let prices: Prices = market.get_all_prices().await.unwrap();
+        let prices = market.get_all_prices().await.unwrap();
         mock_get_all_prices.assert();
 
         match prices {
-            binance::model::Prices::AllPrices(symbols) => {
+            Prices::AllPrices(symbols) => {
                 assert!(!symbols.is_empty());
                 let first_symbol = symbols[0].clone();
                 assert_eq!(first_symbol.symbol, "LTCBTC");
-                assert!(approx_eq!(f64, first_symbol.price, 4.00000200, ulps = 2));
+                assert!(approx_eq!(f64, first_symbol.price, 4.000_002_00, ulps = 2));
                 let second_symbol = symbols[1].clone();
                 assert_eq!(second_symbol.symbol, "ETHBTC");
-                assert!(approx_eq!(f64, second_symbol.price, 0.07946600, ulps = 2));
+                assert!(approx_eq!(f64, second_symbol.price, 0.079_466_00, ulps = 2));
             }
         }
     }
@@ -103,13 +103,13 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let symbol = market.get_price("LTCBTC").await.unwrap();
         mock_get_price.assert();
 
         assert_eq!(symbol.symbol, "LTCBTC");
-        assert!(approx_eq!(f64, symbol.price, 4.00000200, ulps = 2));
+        assert!(approx_eq!(f64, symbol.price, 4.000_002_00, ulps = 2));
     }
 
     #[test]
@@ -123,13 +123,13 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let symbol = market.get_average_price("LTCBTC").await.unwrap();
         mock_get_average_price.assert();
 
         assert_eq!(symbol.mins, 5);
-        assert!(approx_eq!(f64, symbol.price, 9.35751834, ulps = 2));
+        assert!(approx_eq!(f64, symbol.price, 9.357_518_34, ulps = 2));
     }
 
     #[test]
@@ -142,7 +142,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let book_tickers = market.get_all_book_tickers().await.unwrap();
         mock_get_all_book_tickers.assert();
@@ -155,41 +155,51 @@ mod tests {
                 assert!(approx_eq!(
                     f64,
                     first_ticker.bid_price,
-                    4.00000000,
+                    4.000_000_00,
                     ulps = 2
                 ));
                 assert!(approx_eq!(
                     f64,
                     first_ticker.bid_qty,
-                    431.00000000,
+                    431.000_000_00,
                     ulps = 2
                 ));
                 assert!(approx_eq!(
                     f64,
                     first_ticker.ask_price,
-                    4.00000200,
+                    4.000_002_00,
                     ulps = 2
                 ));
-                assert!(approx_eq!(f64, first_ticker.ask_qty, 9.00000000, ulps = 2));
+                assert!(approx_eq!(
+                    f64,
+                    first_ticker.ask_qty,
+                    9.000_000_00,
+                    ulps = 2
+                ));
                 let second_ticker = tickers[1].clone();
                 assert_eq!(second_ticker.symbol, "ETHBTC");
                 assert!(approx_eq!(
                     f64,
                     second_ticker.bid_price,
-                    0.07946700,
+                    0.079_467_00,
                     ulps = 2
                 ));
-                assert!(approx_eq!(f64, second_ticker.bid_qty, 9.00000000, ulps = 2));
+                assert!(approx_eq!(
+                    f64,
+                    second_ticker.bid_qty,
+                    9.000_000_00,
+                    ulps = 2
+                ));
                 assert!(approx_eq!(
                     f64,
                     second_ticker.ask_price,
-                    100000.00000000,
+                    100_000.000_000_00,
                     ulps = 2
                 ));
                 assert!(approx_eq!(
                     f64,
                     second_ticker.ask_qty,
-                    1000.00000000,
+                    1_000.000_000_00,
                     ulps = 2
                 ));
             }
@@ -207,16 +217,31 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let book_ticker = market.get_book_ticker("LTCBTC").await.unwrap();
         mock_get_book_ticker.assert();
 
         assert_eq!(book_ticker.symbol, "LTCBTC");
-        assert!(approx_eq!(f64, book_ticker.bid_price, 4.00000000, ulps = 2));
-        assert!(approx_eq!(f64, book_ticker.bid_qty, 431.00000000, ulps = 2));
-        assert!(approx_eq!(f64, book_ticker.ask_price, 4.00000200, ulps = 2));
-        assert!(approx_eq!(f64, book_ticker.ask_qty, 9.00000000, ulps = 2));
+        assert!(approx_eq!(
+            f64,
+            book_ticker.bid_price,
+            4.000_000_00,
+            ulps = 2
+        ));
+        assert!(approx_eq!(
+            f64,
+            book_ticker.bid_qty,
+            431.000_000_00,
+            ulps = 2
+        ));
+        assert!(approx_eq!(
+            f64,
+            book_ticker.ask_price,
+            4.000_002_00,
+            ulps = 2
+        ));
+        assert!(approx_eq!(f64, book_ticker.ask_qty, 9.000_000_00, ulps = 2));
     }
 
     #[test]
@@ -230,7 +255,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let price_stats = market.get_24h_price_stats("BNBBTC").await.unwrap();
         mock_get_24h_price_stats.assert();
@@ -242,33 +267,53 @@ mod tests {
         assert!(approx_eq!(
             f64,
             price_stats.prev_close_price,
-            0.10002000,
+            0.100_020_00,
             ulps = 2
         ));
         assert!(approx_eq!(
             f64,
             price_stats.last_price,
-            4.00000200,
+            4.000_002_00,
             ulps = 2
         ));
-        assert!(approx_eq!(f64, price_stats.bid_price, 4.00000000, ulps = 2));
-        assert!(approx_eq!(f64, price_stats.ask_price, 4.00000200, ulps = 2));
+        assert!(approx_eq!(
+            f64,
+            price_stats.bid_price,
+            4.000_000_00,
+            ulps = 2
+        ));
+        assert!(approx_eq!(
+            f64,
+            price_stats.ask_price,
+            4.000_002_00,
+            ulps = 2
+        ));
         assert!(approx_eq!(
             f64,
             price_stats.open_price,
-            99.00000000,
+            99.000_000_00,
             ulps = 2
         ));
         assert!(approx_eq!(
             f64,
             price_stats.high_price,
-            100.00000000,
+            100.000_000_00,
             ulps = 2
         ));
-        assert!(approx_eq!(f64, price_stats.low_price, 0.10000000, ulps = 2));
-        assert!(approx_eq!(f64, price_stats.volume, 8913.30000000, ulps = 2));
-        assert_eq!(price_stats.open_time, 1499783499040);
-        assert_eq!(price_stats.close_time, 1499869899040);
+        assert!(approx_eq!(
+            f64,
+            price_stats.low_price,
+            0.100_000_00,
+            ulps = 2
+        ));
+        assert!(approx_eq!(
+            f64,
+            price_stats.volume,
+            8_913.300_000_00,
+            ulps = 2
+        ));
+        assert_eq!(price_stats.open_time, 1_499_783_499_040);
+        assert_eq!(price_stats.close_time, 1_499_869_899_040);
         assert_eq!(price_stats.first_id, 28385);
         assert_eq!(price_stats.last_id, 28460);
         assert_eq!(price_stats.count, 76);
@@ -284,52 +329,32 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let prices_stats = market.get_all_24h_price_stats().await.unwrap();
         mock_get_all_24h_price_stats.assert();
 
         assert!(!prices_stats.is_empty());
 
-        let price_stats = prices_stats[0].clone();
+        let ps = prices_stats[0].clone();
 
-        assert_eq!(price_stats.symbol, "BNBBTC");
-        assert_eq!(price_stats.price_change, "-94.99999800");
-        assert_eq!(price_stats.price_change_percent, "-95.960");
-        assert_eq!(price_stats.weighted_avg_price, "0.29628482");
-        assert!(approx_eq!(
-            f64,
-            price_stats.prev_close_price,
-            0.10002000,
-            ulps = 2
-        ));
-        assert!(approx_eq!(
-            f64,
-            price_stats.last_price,
-            4.00000200,
-            ulps = 2
-        ));
-        assert!(approx_eq!(f64, price_stats.bid_price, 4.00000000, ulps = 2));
-        assert!(approx_eq!(f64, price_stats.ask_price, 4.00000200, ulps = 2));
-        assert!(approx_eq!(
-            f64,
-            price_stats.open_price,
-            99.00000000,
-            ulps = 2
-        ));
-        assert!(approx_eq!(
-            f64,
-            price_stats.high_price,
-            100.00000000,
-            ulps = 2
-        ));
-        assert!(approx_eq!(f64, price_stats.low_price, 0.10000000, ulps = 2));
-        assert!(approx_eq!(f64, price_stats.volume, 8913.30000000, ulps = 2));
-        assert_eq!(price_stats.open_time, 1499783499040);
-        assert_eq!(price_stats.close_time, 1499869899040);
-        assert_eq!(price_stats.first_id, 28385);
-        assert_eq!(price_stats.last_id, 28460);
-        assert_eq!(price_stats.count, 76);
+        assert_eq!(ps.symbol, "BNBBTC");
+        assert_eq!(ps.price_change, "-94.99999800");
+        assert_eq!(ps.price_change_percent, "-95.960");
+        assert_eq!(ps.weighted_avg_price, "0.29628482");
+        assert!(approx_eq!(f64, ps.prev_close_price, 0.100_020_00, ulps = 2));
+        assert!(approx_eq!(f64, ps.last_price, 4.000_002_00, ulps = 2));
+        assert!(approx_eq!(f64, ps.bid_price, 4.000_000_00, ulps = 2));
+        assert!(approx_eq!(f64, ps.ask_price, 4.000_002_00, ulps = 2));
+        assert!(approx_eq!(f64, ps.open_price, 99.000_000_00, ulps = 2));
+        assert!(approx_eq!(f64, ps.high_price, 100.000_000_00, ulps = 2));
+        assert!(approx_eq!(f64, ps.low_price, 0.100_000_00, ulps = 2));
+        assert!(approx_eq!(f64, ps.volume, 8_913.300_000_00, ulps = 2));
+        assert_eq!(ps.open_time, 1_499_783_499_040);
+        assert_eq!(ps.close_time, 1_499_869_899_040);
+        assert_eq!(ps.first_id, 28385);
+        assert_eq!(ps.last_id, 28460);
+        assert_eq!(ps.count, 76);
     }
 
     #[test]
@@ -343,7 +368,7 @@ mod tests {
             .create();
 
         let config = Config::default().set_rest_api_endpoint(server.url());
-        let market: Market = Binance::new_with_config(None, None, &config).unwrap();
+        let market = Market::new_with_config(None, None, &config).unwrap();
 
         let klines = market
             .get_klines("LTCBTC", "5m", 10, None, None)
@@ -356,13 +381,13 @@ mod tests {
                 assert!(!klines.is_empty());
                 let kline: KlineSummary = klines[0].clone();
 
-                assert_eq!(kline.open_time, 1499040000000);
+                assert_eq!(kline.open_time, 1_499_040_000_000);
                 assert_eq!(kline.open, "0.01634790");
                 assert_eq!(kline.high, "0.80000000");
                 assert_eq!(kline.low, "0.01575800");
                 assert_eq!(kline.close, "0.01577100");
                 assert_eq!(kline.volume, "148976.11427815");
-                assert_eq!(kline.close_time, 1499644799999);
+                assert_eq!(kline.close_time, 1_499_644_799_999);
                 assert_eq!(kline.quote_asset_volume, "2434.19055334");
                 assert_eq!(kline.number_of_trades, 308);
                 assert_eq!(kline.taker_buy_base_asset_volume, "1756.87402397");
