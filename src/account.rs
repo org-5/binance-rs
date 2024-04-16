@@ -13,6 +13,7 @@ use crate::client::Client;
 use crate::errors::Result;
 use crate::model::AccountInformation;
 use crate::model::Balance;
+use crate::model::CommissionRates;
 use crate::model::Empty;
 use crate::model::HistoricalDataDownloadId;
 use crate::model::Order;
@@ -101,6 +102,18 @@ impl Account {
         let request = build_signed_request(BTreeMap::new(), self.recv_window)?;
         self.client
             .get_signed(API::Spot(Spot::Account), Some(request))
+            .await
+    }
+
+    pub async fn get_commission<S>(&self, symbol: S) -> Result<CommissionRates>
+    where
+        S: Into<String>,
+    {
+        let mut parameters: BTreeMap<String, String> = BTreeMap::new();
+        parameters.insert("symbol".into(), symbol.into());
+        let request = build_signed_request(parameters, self.recv_window)?;
+        self.client
+            .get_signed(API::Spot(Spot::AccountCommission), Some(request))
             .await
     }
 

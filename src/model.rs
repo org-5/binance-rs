@@ -162,6 +162,33 @@ pub struct AccountInformation {
     pub balances: Vec<Balance>,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CommissionRates {
+    symbol: String,
+    standard_commission: Commission,
+    tax_commission: Commission,
+    discount: Discount,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Commission {
+    maker: String,
+    taker: String,
+    buyer: String,
+    seller: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Discount {
+    enabled_for_account: bool,
+    enabled_for_symbol: bool,
+    discount_asset: String,
+    discount: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Balance {

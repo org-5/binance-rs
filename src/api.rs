@@ -45,6 +45,7 @@ pub enum Spot {
     AllOrderList,
     OpenOrderList,
     Account,
+    AccountCommission,
     MyTrades,
     UserDataStream,
 }
@@ -126,6 +127,7 @@ impl From<API> for String {
                 Spot::AllOrderList => "/api/v3/allOrderList".to_owned(),
                 Spot::OpenOrderList => "/api/v3/openOrderList".to_owned(),
                 Spot::Account => "/api/v3/account".to_owned(),
+                Spot::AccountCommission => "/api/v3/account/commission".to_owned(),
                 Spot::MyTrades => "/api/v3/myTrades".to_owned(),
                 Spot::UserDataStream => "/api/v3/userDataStream".to_owned(),
             },
