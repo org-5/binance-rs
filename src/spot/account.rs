@@ -631,7 +631,6 @@ impl Account {
     /// on the order.
     ///
     ///```no_run
-    /// use binance::api::Binance;
     /// use binance::spot::account::*;
     ///
     /// fn main() {
@@ -682,7 +681,6 @@ impl Account {
     /// engine.
     ///
     ///```no_run
-    /// use binance::api::Binance;
     /// use binance::spot::account::*;
     ///
     /// fn main() {
@@ -731,7 +729,6 @@ impl Account {
     /// on the order.
     ///
     ///```no_run
-    /// use binance::api::Binance;
     /// use binance::spot::account::*;
     ///
     /// fn main() {
@@ -782,7 +779,6 @@ impl Account {
     /// engine.
     ///
     ///```no_run
-    /// use binance::api::Binance;
     /// use binance::spot::account::*;
     ///
     /// fn main() {
