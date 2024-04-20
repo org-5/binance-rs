@@ -24,7 +24,8 @@ pub struct General {
 
 impl General {
     /// Create a new General instance.
-    /// If `api_key` and `secret_key` are provided, the client will be authenticated.
+    /// If `api_key` and `secret_key` are provided, the client will be
+    /// authenticated.
     ///
     /// # Errors
     ///
@@ -34,7 +35,8 @@ impl General {
     }
 
     /// Create a new General instance with a configuration.
-    /// If `api_key` and `secret_key` are provided, the client will be authenticated.
+    /// If `api_key` and `secret_key` are provided, the client will be
+    /// authenticated.
     ///
     /// # Errors
     ///

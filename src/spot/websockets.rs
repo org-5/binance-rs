@@ -110,7 +110,8 @@ impl WebSockets {
         Self::connect_wss(&WebsocketAPI::MultiStream.params(&endpoints.join("/"))).await
     }
 
-    /// Connect to the Binance websocket with multiple streams and a configuration
+    /// Connect to the Binance websocket with multiple streams and a
+    /// configuration
     ///
     /// # Errors
     ///

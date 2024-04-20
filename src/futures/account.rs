@@ -210,7 +210,8 @@ impl Display for IncomeType {
 
 impl Account {
     /// Create a new Account instance.
-    /// If `api_key` an`secret_key` are provided, the client will be authenticated.
+    /// If `api_key` an`secret_key` are provided, the client will be
+    /// authenticated.
     ///
     /// # Errors
     ///
@@ -220,7 +221,8 @@ impl Account {
     }
 
     /// Create a new Account instance with a configuration.
-    /// If `api_key` an `secret_key` are provided, the client will be authenticated.
+    /// If `api_key` an `secret_key` are provided, the client will be
+    /// authenticated.
     ///
     /// # Errors
     ///

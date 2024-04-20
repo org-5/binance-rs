@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 #[derive(Deserialize, Clone)]
 pub struct Empty {}

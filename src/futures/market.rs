@@ -200,8 +200,8 @@ impl Market {
             .await
     }
 
-    /// Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
-    /// [doc](https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data)
+    /// Returns up to 'limit' klines for given symbol and interval ("1m", "5m",
+    /// ...) [doc](https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data)
     ///
     /// # Errors
     ///

@@ -94,7 +94,8 @@ impl Display for TimeInForce {
 
 impl Account {
     /// Create a new Account instance.
-    /// If `api_key` an`secret_key` are provided, the client will be authenticated.
+    /// If `api_key` an`secret_key` are provided, the client will be
+    /// authenticated.
     ///
     /// # Errors
     ///
@@ -104,7 +105,8 @@ impl Account {
     }
 
     /// Create a new Account instance with a configuration.
-    /// If `api_key` an `secret_key` are provided, the client will be authenticated.
+    /// If `api_key` an `secret_key` are provided, the client will be
+    /// authenticated.
     ///
     /// # Errors
     ///
@@ -441,7 +443,8 @@ impl Account {
     ///
     /// # Errors
     ///
-    /// Returns an error if the market buy order with quote quantity cannot be placed.
+    /// Returns an error if the market buy order with quote quantity cannot be
+    /// placed.
     pub async fn market_buy_using_quote_quantity<S, F>(
         &self,
         symbol: S,
@@ -474,7 +477,8 @@ impl Account {
     ///
     /// # Errors
     ///
-    /// Returns an error if the test market buy order with quote quantity cannot be placed.
+    /// Returns an error if the test market buy order with quote quantity cannot
+    /// be placed.
     pub async fn test_market_buy_using_quote_quantity<S, F>(
         &self,
         symbol: S,
@@ -566,7 +570,8 @@ impl Account {
     ///
     /// # Errors
     ///
-    /// Returns an error if the market sell order with quote quantity cannot be placed.
+    /// Returns an error if the market sell order with quote quantity cannot be
+    /// placed.
     pub async fn market_sell_using_quote_quantity<S, F>(
         &self,
         symbol: S,
@@ -599,7 +604,8 @@ impl Account {
     ///
     /// # Errors
     ///
-    /// Returns an error if the test market sell order with quote quantity cannot be placed.
+    /// Returns an error if the test market sell order with quote quantity
+    /// cannot be placed.
     pub async fn test_market_sell_using_quote_quantity<S, F>(
         &self,
         symbol: S,

@@ -181,8 +181,8 @@ impl Market {
     /// Get aggregated historical trades.
     ///
     /// If you provide `start_time`, you also need to provide `end_time`.
-    /// If `from_id`, `start_time` and `end_time` are omitted, the most recent trades
-    /// are fetched.
+    /// If `from_id`, `start_time` and `end_time` are omitted, the most recent
+    /// trades are fetched.
     ///
     /// # Errors
     ///
@@ -227,8 +227,8 @@ impl Market {
             .await
     }
 
-    /// Returns up to 'limit' klines for given symbol and interval ("1m", "5m", ...)
-    /// [docs](https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data)
+    /// Returns up to 'limit' klines for given symbol and interval ("1m", "5m",
+    /// ...) [docs](https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md#klinecandlestick-data)
     ///
     /// # Errors
     ///

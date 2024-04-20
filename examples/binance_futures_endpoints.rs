@@ -1,8 +1,12 @@
 use binance::errors::ErrorKind as BinanceLibErrorKind;
 use binance::futures::general::General;
 use binance::futures::market::Market;
-use binance::futures::model::{AggTrades, LiquidationOrders, MarkPrices, Trades};
-use binance::model::{BookTickers, KlineSummaries};
+use binance::futures::model::AggTrades;
+use binance::futures::model::LiquidationOrders;
+use binance::futures::model::MarkPrices;
+use binance::futures::model::Trades;
+use binance::model::BookTickers;
+use binance::model::KlineSummaries;
 
 #[tokio::main]
 async fn main() {
